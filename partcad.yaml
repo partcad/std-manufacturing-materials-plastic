@@ -1,4 +1,13 @@
-name: /pub/std/manufacturing/material/plastic
+# The package path this catalogue is published at inside partcad-index, so
+# that standalone development uses the very same addresses its consumers will.
+name: //pub/std/manufacturing/material/plastic
+
+# 'materials:' is only read by the PartCAD that has the material object type;
+# before it, this file parsed and every material in it was silently ignored.
+# TODO: raise to the released version that carries it once one exists.
+partcad: ">=0.8.46"
+
+desc: Standard plastics, as PartCAD materials.
 
 materials:
   pla:
