@@ -7,9 +7,27 @@ name: //pub/std/manufacturing/material/plastic
 # TODO: raise to the released version that carries it once one exists.
 partcad: ">=0.8.46"
 
-desc: Standard plastics, as PartCAD materials.
+desc: Standard polymers - thermoplastics, composites and elastomers - as PartCAD materials.
 
+# Two conventions this file keeps, so that a reader does not have to work them
+# out from the entries:
+#
+# * 'density' is g/mm^3, which is what PartCAD computes a mass in. A datasheet
+#   quotes g/cm^3, 1000x larger: PLA at 1.32 g/cm^3 is 0.00132 here. A filled
+#   grade is denser than the resin it is filled with, which is why the
+#   glass- and carbon-filled entries state a density of their own rather than
+#   borrowing the unfilled one.
+#
+# * 'mu' is a typical dry sliding coefficient against the counterface the
+#   material actually runs against - polished steel for the bearing plastics,
+#   dry pavement for the tyre rubbers - and each entry that states one says
+#   which. It is stated only where the tables agree; where they do not, it is
+#   left out rather than invented, and a part made of such a material gets the
+#   simulator's default exactly as it did before anybody catalogued it.
 materials:
+  #
+  # Commodity and printable thermoplastics
+  #
   pla:
     formal: PLA
     full: Polylactic Acid
@@ -40,6 +58,120 @@ materials:
       - heat-resistant
       - impact-resistant
       - chemical-resistant
+  asa:
+    formal: ASA
+    full: Acrylonitrile Styrene Acrylate
+    desc: |
+      ABS with the butadiene replaced by an acrylate rubber, which is the part
+      of ABS that ultraviolet light destroys. It is therefore the one of the
+      two that goes outdoors and stays there: automotive exterior trim,
+      mirror housings, radiator grilles, antenna and sensor covers, and
+      printed parts for robots that live outside.
+    url: https://en.wikipedia.org/wiki/Acrylonitrile_styrene_acrylate
+    density: 0.00107
+    tags:
+      - uv-resistant
+      - weatherable
+      - impact-resistant
+      - automotive
+  petg:
+    formal: PETG
+    full: Glycol-modified Polyethylene Terephthalate
+    desc: |
+      The glycol modification stops PET crystallising, which is what makes
+      this printable and thermoformable. Tougher and far less brittle than
+      PLA, dimensionally stable where ABS warps, and clear enough for guards
+      and covers: machine guarding, fluid-handling parts, sensor windows and
+      most printed fixtures that have to survive being handled.
+    url: https://en.wikipedia.org/wiki/Polyethylene_terephthalate
+    density: 0.00127
+    tags:
+      - impact-resistant
+      - chemical-resistant
+      - transparent
+      - printable
+  pc:
+    formal: PC
+    full: Polycarbonate
+    desc: |
+      The transparent engineering thermoplastic, and about as impact resistant
+      as a polymer gets - machine guarding, headlamp lenses, canopies, drone
+      shells, battery and connector housings. It stays usable to around 120 C,
+      it is attacked by many solvents, and it is notorious for cracking later
+      where it was left stressed or attacked by the wrong adhesive.
+    url: https://en.wikipedia.org/wiki/Polycarbonate
+    density: 0.0012
+    tags:
+      - impact-resistant
+      - transparent
+      - heat-resistant
+      - automotive
+  pmma:
+    formal: PMMA
+    full: Poly(methyl methacrylate)
+    desc: |
+      Acrylic: harder, clearer and far more scratch resistant than
+      polycarbonate, and much more brittle. Laser-cut panels and enclosures,
+      light pipes and lenses, tail-light lenses, instrument covers and
+      anything that has to be seen through and not touched much.
+    url: https://en.wikipedia.org/wiki/Acrylic_glass
+    density: 0.00118
+    tags:
+      - transparent
+      - uv-resistant
+      - scratch-resistant
+      - brittle
+  pp:
+    formal: PP
+    full: Polypropylene
+    desc: |
+      Cheap, light, chemically almost inert, and the only common plastic whose
+      hinge survives being folded a million times - so bumpers, interior trim,
+      battery cases, ducting, tanks and every living hinge are made of it.
+      Hard to bond or paint without treating the surface first, and it creeps
+      under sustained load.
+    url: https://en.wikipedia.org/wiki/Polypropylene
+    density: 0.000905
+    tags:
+      - low-cost
+      - chemical-resistant
+      - fatigue-resistant
+      - automotive
+  hdpe:
+    formal: HDPE
+    full: High-density Polyethylene
+    desc: |
+      The tank and bottle plastic: blow-moulded fuel tanks, coolant and washer
+      reservoirs, fluid lines, cutting boards and wear strips. Tough down to
+      low temperatures, unaffected by most chemicals, and effectively unglueable
+      - it is welded instead.
+    url: https://en.wikipedia.org/wiki/High-density_polyethylene
+    density: 0.00095
+    tags:
+      - low-cost
+      - chemical-resistant
+      - low-friction
+      - automotive
+  pvc:
+    formal: PVC
+    full: Polyvinyl Chloride
+    desc: |
+      Rigid as conduit, trunking, sheet and pipe; plasticised as wire
+      insulation, grommets, seals and underbody coatings. Inherently flame
+      retardant and cheap, which is what keeps it in buildings and wiring
+      looms, but it softens early and the chlorine in it makes both machining
+      swarf and fires unpleasant.
+    url: https://en.wikipedia.org/wiki/Polyvinyl_chloride
+    density: 0.0014
+    tags:
+      - low-cost
+      - flame-retardant
+      - chemical-resistant
+      - electrical-insulator
+
+  #
+  # Engineering thermoplastics
+  #
   nylon:
     formal: Nylon
     full: Nylon
@@ -51,7 +183,304 @@ materials:
       However, due to its structure it is prone to absorb water which causes a chemical change of the material and effects the material properties.
     url: https://en.wikipedia.org/wiki/Nylon
     density: 0.00115
+    mu: 0.3 # dry against polished steel
     tags:
       - durable
-      - abraision-Reistant
+      - abrasion-resistant
       - flexible
+  pa12:
+    formal: PA12
+    full: Polyamide 12 (Nylon 12)
+    desc: |
+      The nylon that barely absorbs water, which is what makes it dimensionally
+      stable where PA6 and PA66 swell: fuel and brake lines, pneumatic tubing,
+      cable jacketing, and almost every part that comes out of an SLS or MJF
+      machine. Tough and flexible at low temperature, and weaker and pricier
+      than PA66.
+    url: https://en.wikipedia.org/wiki/Nylon_12
+    density: 0.00101
+    tags:
+      - dimensionally-stable
+      - chemical-resistant
+      - flexible
+      - printable
+  pa66-gf30:
+    formal: PA66-GF30
+    full: Polyamide 66 with 30% glass fibre
+    desc: |
+      The structural plastic of a vehicle and of a robot: 30% chopped glass
+      turns nylon into something stiff and creep resistant enough for gear
+      housings, intake manifolds, pedal boxes, brackets, motor mounts and
+      connector bodies that see heat. The glass is abrasive to the tooling and
+      to whatever the part runs against, and the fibres leave the moulded part
+      stiffer along the flow than across it.
+    url: https://en.wikipedia.org/wiki/Nylon_66
+    density: 0.00137
+    tags:
+      - glass-filled
+      - stiff
+      - heat-resistant
+      - automotive
+      - structural
+  pa6-cf:
+    formal: PA6-CF
+    full: Polyamide 6 with chopped carbon fibre
+    desc: |
+      Chopped carbon fibre in nylon: the stiff, dimensionally stable filament
+      that printed robot end effectors, arms, drone frames and fixtures are
+      made of when a printed part has to hold a load rather than a shape. Far
+      stiffer and less prone to warp than unfilled nylon, still nowhere near a
+      continuous-fibre laminate, and it wants a hardened nozzle.
+    url: https://en.wikipedia.org/wiki/Carbon-fiber-reinforced_polymer
+    density: 0.0012
+    tags:
+      - carbon-filled
+      - stiff
+      - lightweight
+      - printable
+      - robotics
+  pom:
+    formal: POM
+    full: Polyoxymethylene (Acetal, Delrin)
+    desc: |
+      The machinist's and the gear designer's plastic: stiff, strong, slippery,
+      and it holds its size because it hardly absorbs water at all. Spur and
+      worm gears, bushings, cams, rollers, fuel-system and window-mechanism
+      parts, and anything small turned out of rod. It is hard to bond, it
+      burns rather than resists flame, and it is attacked by strong acids.
+    url: https://en.wikipedia.org/wiki/Polyoxymethylene
+    density: 0.00141
+    mu: 0.2 # dry against polished steel
+    tags:
+      - low-friction
+      - wear-resistant
+      - dimensionally-stable
+      - machinable
+  uhmwpe:
+    formal: UHMWPE
+    full: Ultra-high-molecular-weight Polyethylene
+    desc: |
+      Polyethylene with chains so long it stops behaving like polyethylene:
+      the most abrasion-resistant plastic in ordinary use, and nearly as
+      slippery as PTFE. Chain and belt guides, conveyor wear strips, bearing
+      pads, hopper liners, and the bearing surface of an artificial joint.
+      It creeps under load and cannot be injection moulded in the usual way.
+    url: https://en.wikipedia.org/wiki/Ultra-high-molecular-weight_polyethylene
+    density: 0.00094
+    mu: 0.15 # dry against polished steel
+    tags:
+      - low-friction
+      - abrasion-resistant
+      - impact-resistant
+      - self-lubricating
+
+  #
+  # High-performance thermoplastics
+  #
+  ptfe:
+    formal: PTFE
+    full: Polytetrafluoroethylene
+    desc: |
+      One of the lowest coefficients of friction of any solid, and chemically
+      inert to essentially everything, from -200 C to +260 C: seals, sliding
+      bearings, wire insulation, gaskets and lined hose. Soft, heavy, it creeps
+      badly under load, and nothing sticks to it - including adhesives, which
+      is why it is bolted, clamped or etched rather than bonded.
+    url: https://en.wikipedia.org/wiki/Polytetrafluoroethylene
+    density: 0.0022
+    mu: 0.04 # dry against polished steel
+    tags:
+      - low-friction
+      - chemical-resistant
+      - heat-resistant
+      - electrical-insulator
+  peek:
+    formal: PEEK
+    full: Polyether Ether Ketone
+    desc: |
+      The thermoplastic that replaces metal: it keeps useful strength to about
+      250 C, resists nearly every chemical, does not outgas, and is sterilisable
+      and implantable. Aircraft interior and engine-bay brackets, bearings and
+      seals, semiconductor and vacuum hardware, downhole parts, spinal
+      implants, and printed parts where nothing cheaper survives. It costs
+      roughly a hundred times what ABS does.
+    url: https://en.wikipedia.org/wiki/Polyether_ether_ketone
+    density: 0.0013
+    mu: 0.35 # dry against polished steel
+    tags:
+      - high-temperature
+      - chemical-resistant
+      - high-strength
+      - biocompatible
+      - aviation
+  pei:
+    formal: PEI
+    full: Polyetherimide (ULTEM)
+    desc: |
+      The aircraft-interior plastic: amber, stiff, stable to about 170 C, and
+      it passes the flame, smoke and toxicity requirements that decide what may
+      be inside a cabin. Ducting, panels, brackets and seat parts, and the
+      grade printed as ULTEM 9085 is what much of the certified printed flight
+      hardware is made of.
+    url: https://en.wikipedia.org/wiki/Polyetherimide
+    density: 0.00127
+    tags:
+      - high-temperature
+      - flame-retardant
+      - aviation
+      - dimensionally-stable
+  pps:
+    formal: PPS
+    full: Polyphenylene Sulfide
+    desc: |
+      The under-bonnet plastic: nothing dissolves it below 200 C, it does not
+      absorb water, it is inherently flame retardant, and glass-filled grades
+      hold their dimensions through a heat cycle. Coolant pumps and impellers,
+      thermostat and throttle bodies, connectors, sensor bodies and fuel-system
+      parts. Brittle, and it needs a hot mould.
+    url: https://en.wikipedia.org/wiki/Polyphenylene_sulfide
+    density: 0.00135
+    tags:
+      - high-temperature
+      - chemical-resistant
+      - flame-retardant
+      - automotive
+
+  #
+  # Polymer-matrix composites
+  #
+  cfrp:
+    formal: CFRP
+    full: Carbon-fibre-reinforced polymer
+    desc: |
+      Continuous carbon fibre in an epoxy matrix: stiffer and stronger for its
+      weight than any metal here, which is what puts it in airframe structure,
+      Formula 1 monocoques, drone arms, robot links and every place a moving
+      part's own mass is the problem. The numbers here are a typical quasi-
+      isotropic laminate - a real laminate's stiffness and strength are
+      properties of its layup and not of the material, and it is anisotropic,
+      it is electrically conductive, and it corrodes aluminium it touches.
+    url: https://en.wikipedia.org/wiki/Carbon-fiber-reinforced_polymer
+    density: 0.00155
+    tags:
+      - composite
+      - lightweight
+      - stiff
+      - aviation
+      - anisotropic
+  gfrp:
+    formal: GFRP
+    full: Glass-fibre-reinforced polymer
+    desc: |
+      Glass fibre in an epoxy or polyester matrix: heavier and much less stiff
+      than carbon, a fraction of the price, and an electrical insulator, which
+      is why G10/FR-4 sheet ends up as robot chassis plate, battery-pack
+      structure and standoffs. Also bodywork, ducting, radomes and pressure
+      vessels. Abrasive to cut, and the dust needs respecting.
+    url: https://en.wikipedia.org/wiki/Fiberglass
+    density: 0.00185
+    tags:
+      - composite
+      - electrical-insulator
+      - low-cost
+      - stiff
+
+  #
+  # Elastomers
+  #
+  tpu:
+    formal: TPU
+    full: Thermoplastic Polyurethane
+    desc: |
+      Rubber that can be injection moulded and printed: bump stops, bellows,
+      grommets, cable strain reliefs, protective bumpers, gaskets, wheels and
+      soft-robotic parts, from shore 60A to 85A and up. Exceptionally abrasion
+      resistant and tough for its hardness, and it hydrolyses over time in hot
+      water.
+    url: https://en.wikipedia.org/wiki/Thermoplastic_polyurethane
+    density: 0.00121
+    tags:
+      - elastomer
+      - abrasion-resistant
+      - flexible
+      - printable
+  nr:
+    formal: NR
+    full: Natural rubber
+    desc: |
+      The rubber everything else is compared with: the highest grip and the
+      best fatigue and tear resistance of the elastomers, which is what keeps
+      it in tyre carcasses, robot drive wheels, engine and cab mounts,
+      suspension bushings and anti-vibration pads. Ozone, sunlight, oil and
+      fuel all attack it, so it stays away from anything petroleum.
+    url: https://en.wikipedia.org/wiki/Natural_rubber
+    density: 0.00093
+    mu: 1.0 # rubber on a dry hard surface - the road or floor a wheel runs on
+    tags:
+      - elastomer
+      - high-friction
+      - damping
+      - fatigue-resistant
+  nbr:
+    formal: NBR
+    full: Nitrile rubber (Buna-N)
+    desc: |
+      The oil seal: the nitrile in it is what makes it indifferent to fuel,
+      oil and grease, and that is the whole reason most O-rings, shaft seals,
+      fuel hose liners and hydraulic seals are made of it. Cheap and hard
+      wearing, up to about 100 C, and poor in ozone, sunlight and brake fluid.
+    url: https://en.wikipedia.org/wiki/Nitrile_rubber
+    density: 0.001
+    tags:
+      - elastomer
+      - oil-resistant
+      - sealing
+      - low-cost
+  epdm:
+    formal: EPDM
+    full: Ethylene Propylene Diene Monomer rubber
+    desc: |
+      The weather seal: door and window seals, coolant and radiator hose,
+      brake system seals, roofing and wire insulation. It shrugs off ozone,
+      sunlight, steam and water where NBR perishes, and it swells and fails in
+      fuel and mineral oil, which is the trade it makes.
+    url: https://en.wikipedia.org/wiki/EPDM_rubber
+    density: 0.00115
+    tags:
+      - elastomer
+      - weatherable
+      - sealing
+      - automotive
+  fkm:
+    formal: FKM
+    full: Fluoroelastomer (Viton)
+    desc: |
+      Where nitrile has given up: fuel-injection and turbo seals, engine and
+      gearbox shaft seals, aircraft fuel-system O-rings, chemical and vacuum
+      hardware. It holds up in hot oil, fuel and most chemicals to around
+      200 C, several times the price, and it is poor in steam and in the cold.
+    url: https://en.wikipedia.org/wiki/FKM
+    density: 0.0018
+    tags:
+      - elastomer
+      - high-temperature
+      - oil-resistant
+      - chemical-resistant
+      - aviation
+  silicone:
+    formal: VMQ
+    full: Silicone rubber
+    desc: |
+      Useful from about -60 C to +200 C, which no organic rubber manages, and
+      it is physiologically inert: gaskets and seals that see heat, ignition
+      boots, keypads, medical and food tubing, cast soft-robotic actuators and
+      the moulds other things are cast in. Mechanically weak - it tears easily
+      and abrades quickly - and it swells in fuel and oil.
+    url: https://en.wikipedia.org/wiki/Silicone_rubber
+    density: 0.0012
+    tags:
+      - elastomer
+      - high-temperature
+      - biocompatible
+      - sealing
+      - castable
