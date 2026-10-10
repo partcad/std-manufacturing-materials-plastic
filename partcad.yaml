@@ -2,19 +2,23 @@
 # that standalone development uses the very same addresses its consumers will.
 name: //pub/std/manufacturing/material/plastic
 
-# 'materials:' is only read by the PartCAD that has the material object type;
-# before it, this file parsed and every material in it was silently ignored.
-# TODO: raise to the released version that carries it once one exists.
-partcad: ">=0.8.46"
+# Every density below is in kg/m^3, which is the unit PartCAD reads a density in
+# from the release that resolves a part's mass from its material. Before it, a
+# density was read in g/mm^3, in which the same substance is a number a million
+# times smaller - so an older PartCAD would make every part made of these
+# materials weigh a million times what it does. It is refused here rather than
+# left to weigh anything.
+# TODO: set to the release partcad/partcad#755 lands in, if that is not this one.
+partcad: ">=0.8.169"
 
 desc: Standard polymers - thermoplastics, composites and elastomers - as PartCAD materials.
 
 # Two conventions this file keeps, so that a reader does not have to work them
 # out from the entries:
 #
-# * 'density' is g/mm^3, which is what PartCAD computes a mass in. A datasheet
-#   quotes g/cm^3, 1000x larger: PLA at 1.32 g/cm^3 is 0.00132 here. A filled
-#   grade is denser than the resin it is filled with, which is why the
+# * 'density' is kg/m^3, the one unit PartCAD has for a density. A datasheet
+#   often quotes g/cm^3, 1000x smaller: PLA at 1.32 g/cm^3 is 1320 here. A
+#   filled grade is denser than the resin it is filled with, which is why the
 #   glass- and carbon-filled entries state a density of their own rather than
 #   borrowing the unfilled one.
 #
@@ -37,7 +41,7 @@ materials:
       However, this origin can cause it to not be resistant to water or chemicals.
     url: https://en.wikipedia.org/wiki/Polylactic_acid
     # img: images/pla.png
-    density: 0.001320 # g/mm^3
+    density: 1320 # kg/m^3
     tags:
       - low-cost
       - impact-resistant
@@ -53,7 +57,7 @@ materials:
       The styrene provides the strength in this molecule, while the butadiene provides toughness,
       and the acrylonitrile provideds the chemical resistance and heat stablitity.
     url: https://en.wikipedia.org/wiki/Acrylonitrile_butadiene_styrene
-    density: 0.00107
+    density: 1070
     tags:
       - heat-resistant
       - impact-resistant
@@ -68,7 +72,7 @@ materials:
       mirror housings, radiator grilles, antenna and sensor covers, and
       printed parts for robots that live outside.
     url: https://en.wikipedia.org/wiki/Acrylonitrile_styrene_acrylate
-    density: 0.00107
+    density: 1070
     tags:
       - uv-resistant
       - weatherable
@@ -84,7 +88,7 @@ materials:
       and covers: machine guarding, fluid-handling parts, sensor windows and
       most printed fixtures that have to survive being handled.
     url: https://en.wikipedia.org/wiki/Polyethylene_terephthalate
-    density: 0.00127
+    density: 1270
     tags:
       - impact-resistant
       - chemical-resistant
@@ -100,7 +104,7 @@ materials:
       it is attacked by many solvents, and it is notorious for cracking later
       where it was left stressed or attacked by the wrong adhesive.
     url: https://en.wikipedia.org/wiki/Polycarbonate
-    density: 0.0012
+    density: 1200
     tags:
       - impact-resistant
       - transparent
@@ -115,7 +119,7 @@ materials:
       light pipes and lenses, tail-light lenses, instrument covers and
       anything that has to be seen through and not touched much.
     url: https://en.wikipedia.org/wiki/Acrylic_glass
-    density: 0.00118
+    density: 1180
     tags:
       - transparent
       - uv-resistant
@@ -131,7 +135,7 @@ materials:
       Hard to bond or paint without treating the surface first, and it creeps
       under sustained load.
     url: https://en.wikipedia.org/wiki/Polypropylene
-    density: 0.000905
+    density: 905
     tags:
       - low-cost
       - chemical-resistant
@@ -146,7 +150,7 @@ materials:
       low temperatures, unaffected by most chemicals, and effectively unglueable
       - it is welded instead.
     url: https://en.wikipedia.org/wiki/High-density_polyethylene
-    density: 0.00095
+    density: 950
     tags:
       - low-cost
       - chemical-resistant
@@ -162,7 +166,7 @@ materials:
       looms, but it softens early and the chlorine in it makes both machining
       swarf and fires unpleasant.
     url: https://en.wikipedia.org/wiki/Polyvinyl_chloride
-    density: 0.0014
+    density: 1400
     tags:
       - low-cost
       - flame-retardant
@@ -182,7 +186,7 @@ materials:
       It is tough, flexible, and non-biodegradable.
       However, due to its structure it is prone to absorb water which causes a chemical change of the material and effects the material properties.
     url: https://en.wikipedia.org/wiki/Nylon
-    density: 0.00115
+    density: 1150
     mu: 0.3 # dry against polished steel
     tags:
       - durable
@@ -198,7 +202,7 @@ materials:
       machine. Tough and flexible at low temperature, and weaker and pricier
       than PA66.
     url: https://en.wikipedia.org/wiki/Nylon_12
-    density: 0.00101
+    density: 1010
     tags:
       - dimensionally-stable
       - chemical-resistant
@@ -215,7 +219,7 @@ materials:
       to whatever the part runs against, and the fibres leave the moulded part
       stiffer along the flow than across it.
     url: https://en.wikipedia.org/wiki/Nylon_66
-    density: 0.00137
+    density: 1370
     tags:
       - glass-filled
       - stiff
@@ -232,7 +236,7 @@ materials:
       stiffer and less prone to warp than unfilled nylon, still nowhere near a
       continuous-fibre laminate, and it wants a hardened nozzle.
     url: https://en.wikipedia.org/wiki/Carbon-fiber-reinforced_polymer
-    density: 0.0012
+    density: 1200
     tags:
       - carbon-filled
       - stiff
@@ -249,7 +253,7 @@ materials:
       parts, and anything small turned out of rod. It is hard to bond, it
       burns rather than resists flame, and it is attacked by strong acids.
     url: https://en.wikipedia.org/wiki/Polyoxymethylene
-    density: 0.00141
+    density: 1410
     mu: 0.2 # dry against polished steel
     tags:
       - low-friction
@@ -266,7 +270,7 @@ materials:
       pads, hopper liners, and the bearing surface of an artificial joint.
       It creeps under load and cannot be injection moulded in the usual way.
     url: https://en.wikipedia.org/wiki/Ultra-high-molecular-weight_polyethylene
-    density: 0.00094
+    density: 940
     mu: 0.15 # dry against polished steel
     tags:
       - low-friction
@@ -287,7 +291,7 @@ materials:
       badly under load, and nothing sticks to it - including adhesives, which
       is why it is bolted, clamped or etched rather than bonded.
     url: https://en.wikipedia.org/wiki/Polytetrafluoroethylene
-    density: 0.0022
+    density: 2200
     mu: 0.04 # dry against polished steel
     tags:
       - low-friction
@@ -305,7 +309,7 @@ materials:
       implants, and printed parts where nothing cheaper survives. It costs
       roughly a hundred times what ABS does.
     url: https://en.wikipedia.org/wiki/Polyether_ether_ketone
-    density: 0.0013
+    density: 1300
     mu: 0.35 # dry against polished steel
     tags:
       - high-temperature
@@ -323,7 +327,7 @@ materials:
       grade printed as ULTEM 9085 is what much of the certified printed flight
       hardware is made of.
     url: https://en.wikipedia.org/wiki/Polyetherimide
-    density: 0.00127
+    density: 1270
     tags:
       - high-temperature
       - flame-retardant
@@ -339,7 +343,7 @@ materials:
       thermostat and throttle bodies, connectors, sensor bodies and fuel-system
       parts. Brittle, and it needs a hot mould.
     url: https://en.wikipedia.org/wiki/Polyphenylene_sulfide
-    density: 0.00135
+    density: 1350
     tags:
       - high-temperature
       - chemical-resistant
@@ -361,7 +365,7 @@ materials:
       properties of its layup and not of the material, and it is anisotropic,
       it is electrically conductive, and it corrodes aluminium it touches.
     url: https://en.wikipedia.org/wiki/Carbon-fiber-reinforced_polymer
-    density: 0.00155
+    density: 1550
     tags:
       - composite
       - lightweight
@@ -378,7 +382,7 @@ materials:
       structure and standoffs. Also bodywork, ducting, radomes and pressure
       vessels. Abrasive to cut, and the dust needs respecting.
     url: https://en.wikipedia.org/wiki/Fiberglass
-    density: 0.00185
+    density: 1850
     tags:
       - composite
       - electrical-insulator
@@ -398,7 +402,7 @@ materials:
       resistant and tough for its hardness, and it hydrolyses over time in hot
       water.
     url: https://en.wikipedia.org/wiki/Thermoplastic_polyurethane
-    density: 0.00121
+    density: 1210
     tags:
       - elastomer
       - abrasion-resistant
@@ -414,7 +418,7 @@ materials:
       suspension bushings and anti-vibration pads. Ozone, sunlight, oil and
       fuel all attack it, so it stays away from anything petroleum.
     url: https://en.wikipedia.org/wiki/Natural_rubber
-    density: 0.00093
+    density: 930
     mu: 1.0 # rubber on a dry hard surface - the road or floor a wheel runs on
     tags:
       - elastomer
@@ -430,7 +434,7 @@ materials:
       fuel hose liners and hydraulic seals are made of it. Cheap and hard
       wearing, up to about 100 C, and poor in ozone, sunlight and brake fluid.
     url: https://en.wikipedia.org/wiki/Nitrile_rubber
-    density: 0.001
+    density: 1000
     tags:
       - elastomer
       - oil-resistant
@@ -445,7 +449,7 @@ materials:
       sunlight, steam and water where NBR perishes, and it swells and fails in
       fuel and mineral oil, which is the trade it makes.
     url: https://en.wikipedia.org/wiki/EPDM_rubber
-    density: 0.00115
+    density: 1150
     tags:
       - elastomer
       - weatherable
@@ -460,7 +464,7 @@ materials:
       hardware. It holds up in hot oil, fuel and most chemicals to around
       200 C, several times the price, and it is poor in steam and in the cold.
     url: https://en.wikipedia.org/wiki/FKM
-    density: 0.0018
+    density: 1800
     tags:
       - elastomer
       - high-temperature
@@ -477,7 +481,7 @@ materials:
       the moulds other things are cast in. Mechanically weak - it tears easily
       and abrades quickly - and it swells in fuel and oil.
     url: https://en.wikipedia.org/wiki/Silicone_rubber
-    density: 0.0012
+    density: 1200
     tags:
       - elastomer
       - high-temperature
