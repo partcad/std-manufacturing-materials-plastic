@@ -8,8 +8,8 @@ name: //pub/std/manufacturing/material/plastic
 # times smaller - so an older PartCAD would make every part made of these
 # materials weigh a million times what it does. It is refused here rather than
 # left to weigh anything.
-# TODO: set to the release partcad/partcad#755 lands in, if that is not this one.
-partcad: ">=0.8.169"
+# 0.8.174 is the release partcad/partcad#755 landed in.
+partcad: ">=0.8.174"
 
 desc: Standard polymers - thermoplastics, composites and elastomers - as PartCAD materials.
 
