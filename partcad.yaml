@@ -2,24 +2,31 @@
 # that standalone development uses the very same addresses its consumers will.
 name: //pub/std/manufacturing/material/plastic
 
-# Every density below is in kg/m^3, which is the unit PartCAD reads a density in
-# from the release that resolves a part's mass from its material. Before it, a
-# density was read in g/mm^3, in which the same substance is a number a million
-# times smaller - so an older PartCAD would make every part made of these
-# materials weigh a million times what it does. It is refused here rather than
-# left to weigh anything.
-# 0.8.174 is the release partcad/partcad#755 landed in.
-partcad: ">=0.8.174"
+# Most of the materials below are parametric: their numbers are computed from
+# what a grade is made of when it is named (see "Parameters" below), with the
+# functions PartCAD's expressions have since partcad/partcad's
+# parametric-materials change - interpolate() first among them - and several
+# are 'type: enrich' of another. 0.10.21 is the first release with that change.
+# An older PartCAD cannot evaluate those functions and does not know 'enrich':
+# it would leave every computed number as the text of an expression it could
+# not evaluate, and read nylon, hdpe, pa66-gf30 and the other enriches as
+# declarations without their numbers - a part made of almost anything here
+# would lose its density and its analysis values. It is refused here instead.
+#
+# Every density is in kg/m^3, the unit PartCAD has read a density in since
+# partcad/partcad#755 (0.8.174); an older one read it in g/mm^3, a million
+# times smaller, and that is long behind this floor.
+partcad: ">=0.10.21"
 
 desc: Standard polymers - thermoplastics, composites and elastomers - as PartCAD materials.
 
-# Two conventions this file keeps, so that a reader does not have to work them
+# The conventions this file keeps, so that a reader does not have to work them
 # out from the entries:
 #
 # * 'density' is kg/m^3, the one unit PartCAD has for a density. A datasheet
-#   often quotes g/cm^3, 1000x smaller: PLA at 1.32 g/cm^3 is 1320 here. A
-#   filled grade is denser than the resin it is filled with, which is why the
-#   glass- and carbon-filled entries state a density of their own rather than
+#   often quotes g/cm^3, 1000x smaller: PLA at 1.24 g/cm^3 is 1240 here. A
+#   filled grade is denser than the resin it is filled with, which is why a
+#   glass- or carbon-filled grade computes a density of its own rather than
 #   borrowing the unfilled one.
 #
 # * 'mu' is a typical dry sliding coefficient against the counterface the
@@ -28,6 +35,40 @@ desc: Standard polymers - thermoplastics, composites and elastomers - as PartCAD
 #   which. It is stated only where the tables agree; where they do not, it is
 #   left out rather than invented, and a part made of such a material gets the
 #   simulator's default exactly as it did before anybody catalogued it.
+#
+# * Parameters. A material that is sold in grades differing in what they are
+#   made of - a filler's mass fraction, the composition of a copolymer, a
+#   hardness, whether it has taken up water - declares that as a parameter,
+#   with its unit and the range its sources cover ('min', 'max'), and is named
+#   with the values of the grade meant: ':pa66;conditioned=true,glass=0.3',
+#   ':abs;butadiene=0.23'. Named without values it is its defaults - for an
+#   entry that was here before parameters were, the grade it has always
+#   stated - and it keeps its plain name.
+#
+# * Computed values. A number that depends on a parameter is an expression
+#   ('%...%') that interpolate()s between grades whose datasheets state it: at
+#   a grade's own parameter values it is that grade's number to the digit, and
+#   in between it is interpolated. The comment beside it names the grades it
+#   passes through and says what the rest is - interpolated, estimated from a
+#   named relation, or a guess. A number that holds for every value of the
+#   parameters is a plain number, and its comment says which grades it is
+#   sourced for and at which it is only held. A grade that breaks before it
+#   yields - most glass- and carbon-filled ones, and SAN - states its tensile
+#   stress at break as its 'yieldStrength': the highest stress it carries.
+#
+# * Enrich. A grade that has a name of its own is 'type: enrich' of the
+#   material it is a grade of, with the values that make it that grade
+#   ('with'): hdpe is pe at 950 kg/m^3, pa66-gf30 is pa66 with 30 % glass. It
+#   takes the numbers of that instance under its own name, so what consumers
+#   reference stays what it was. abs-high-heat and abs-high-impact stack on
+#   abs: each has a parameter of its own - a heat deflection temperature, a
+#   notched Izod impact strength - which it maps onto abs's composition, and
+#   defaults that are a grade on sale.
+#
+# * Colour. A plastic is pigmented to whatever colour a part is made in, so
+#   these materials claim none - except a carbon-filled one, which is black
+#   through and claims 'carbon-black' for as long as it is filled.
+#
 # What an analysis of a part made of one of these is solved with -- the
 # 'youngsModulus' (Pa), 'poissonsRatio', 'yieldStrength' (Pa) and
 # 'thermalConductivity' (W/(m*K)) beside each density -- is stated only where it
@@ -36,9 +77,30 @@ desc: Standard polymers - thermoplastics, composites and elastomers - as PartCAD
 # absent was not known well enough to state: a part made of the material is then
 # analysed at the implementation's own default for it, which is visibly a
 # default, rather than at a guess that looks like a fact. PartCAD 0.10.17 and
-# later read these keys and hand them to a part's analyses. An older one ignores
-# them, and only its 'pc lint' reports them as unknown, so the 'partcad:' floor
-# above stays where it is: nothing an older PartCAD reads here has changed.
+# later read these keys and hand them to a part's analyses.
+
+# Gent's relation between Shore A hardness S and Young's modulus E, which the
+# elastomers below compute their modulus from:
+#   E [MPa] = 0.0981 (56 + 7.62336 S) / (0.137505 (254 - 2.54 S))
+# A. N. Gent, 'On the Relation between Indentation Hardness and Young's
+# Modulus', Rubber Chemistry and Technology 31(4), 1958, pp. 896-906,
+# doi:10.5254/1.3542351, as the Wikipedia article 'Shore durometer' gives it
+# (https://en.wikipedia.org/wiki/Shore_durometer), which also says that it
+# departs from measured data below 40 Shore A. It is an estimate: a rubber's
+# modulus depends on its filler and its cure as well as on its hardness. This
+# writes the expression for a hardness parameter, in Pa, to 0.01 MPa.
+{% macro gent(shore) -%}
+round(0.0981e6 * (56 + 7.62336 * {{ shore }}) / (0.137505 * (254 - 2.54 * {{ shore }})), -4)
+{%- endmacro %}
+
+colors:
+  # The colour of a plastic filled with carbon fibre or carbon black, which is
+  # black through whatever pigment it is given: claimed by the carbon-filled
+  # materials below, and only by those.
+  carbon-black:
+    desc: Black, as a plastic filled with carbon fibre or carbon black is through
+    display: "#222222"
+
 materials:
   #
   # Commodity and printable thermoplastics
@@ -52,7 +114,7 @@ materials:
       However, this origin can cause it to not be resistant to water or chemicals.
     url: https://en.wikipedia.org/wiki/Polylactic_acid
     # img: images/pla.png
-    density: 1320 # kg/m^3
+    density: 1240 # kg/m^3, NatureWorks Ingeo 4043D; ASTM D792 specific gravity 1.24. NatureWorks, Ingeo Biopolymer 4043D Technical Data Sheet (3D printing monofilament grade), https://cdn.shopify.com/s/files/1/1223/5992/files/PLA_4043D_TDS.pdf
     youngsModulus: 3.6e+9 # Pa, NatureWorks Ingeo 4043D; ASTM D882, 23 C (as on the NatureWorks TDS; resin data, not a printed part). NatureWorks, Ingeo Biopolymer 4043D Technical Data Sheet (3D printing monofilament grade), https://cdn.shopify.com/s/files/1/1223/5992/files/PLA_4043D_TDS.pdf
     yieldStrength: 6.0e+7 # Pa, NatureWorks Ingeo 4043D; ASTM D882 tensile yield strength, 23 C. NatureWorks, Ingeo Biopolymer 4043D Technical Data Sheet (3D printing monofilament grade), https://cdn.shopify.com/s/files/1/1223/5992/files/PLA_4043D_TDS.pdf
     thermalConductivity: 0.13 # W/(m*K), generic PLA filament (SD3D); ASTM C518, room temperature. SD3D, PLA Technical Data Sheet (printed filament), hosted at https://3dp.seas.harvard.edu/files/2023/01/PLAMDS.pdf
@@ -64,22 +126,176 @@ materials:
     formal: ABS
     full: Acrylonitrile Butadiene Styrene
     desc: |
-      ABS (Acrylonitrile Butadiene Styrene) is an amphorus thermoplastic polymer known for its durability and impact resistance.
+      ABS (Acrylonitrile Butadiene Styrene) is an amorphous thermoplastic polymer known for its durability and impact resistance.
       Parts made from this material will hold up well to wear and tear.
       A common example of an ABS material are LEGO building blocks.
       ABS is composed of about 50% styrene with various amounts of butadiene and acrylonitrile.
       The styrene provides the strength in this molecule, while the butadiene provides toughness,
-      and the acrylonitrile provideds the chemical resistance and heat stablitity.
+      and the acrylonitrile provides the chemical resistance and heat stability.
     url: https://en.wikipedia.org/wiki/Acrylonitrile_butadiene_styrene
-    density: 1070
-    youngsModulus: 2.3e+9 # Pa, INEOS Styrolution Terluran GP-35; ISO 527, injection-moulded specimen, 23 C. INEOS Styrolution, Terluran GP-35 product data sheet (rev. 05/30/16), https://www.tekogehause.de/uploads/manuali/materiali/TERLURAN%20C-35.pdf
-    poissonsRatio: 0.35 # ABS, unfilled (handbook); 23 C. Machinery's Handbook, 31st ed. (Industrial Press, 2020), 'Stress and Strain in Plastics', Table 1 'Poisson's Ratio at 23 C for Resins and Compounds', p. 566; viewed at https://online.flippingbook.com/view/954192180/629/
-    yieldStrength: 4.4e+7 # Pa, INEOS Styrolution Terluran GP-35; ISO 527 tensile stress at yield, 23 C. INEOS Styrolution, Terluran GP-35 product data sheet (rev. 05/30/16), https://www.tekogehause.de/uploads/manuali/materiali/TERLURAN%20C-35.pdf
-    thermalConductivity: 0.17 # W/(m*K), INEOS Styrolution Terluran GP-35; DIN 52612-1. INEOS Styrolution, Terluran GP-35 product data sheet (rev. 05/30/16), https://www.tekogehause.de/uploads/manuali/materiali/TERLURAN%20C-35.pdf
+    # The grades every number below is computed through, injection-moulded
+    # specimens at 23 C, ISO 527 unless a line says otherwise:
+    #   SAN     INEOS Styrolution Luran 358N, styrene-acrylonitrile - ABS with
+    #           no rubber: 1080 kg/m^3, 3700 MPa, 72 MPa (the datasheet's
+    #           tensile stress at yield; SAN breaks at 3 % strain), 0.17 W/(m*K)
+    #           (DIN 52612). Luran 358N datasheet (UL Prospector copy),
+    #           https://sushengpolymer.com/media/pdf/aRPgTW_Luran-358N.pdf
+    #   GP-35   INEOS Styrolution Terluran GP-35, general purpose: 1040 kg/m^3,
+    #           2300 MPa, 44 MPa, 0.17 W/(m*K) (DIN 52612-1), notched Izod
+    #           22 kJ/m^2, HDT A (annealed) 92 C. Terluran GP-35 product data
+    #           sheet (rev. 05/30/16), https://www.tekogehause.de/uploads/manuali/materiali/TERLURAN%20C-35.pdf
+    #   HI-10   INEOS Styrolution Terluran HI-10, high impact: 1030 kg/m^3,
+    #           1900 MPa, 38 MPa, 0.17 W/(m*K) (ISO 22007-4), notched Izod
+    #           36 kJ/m^2, HDT A (annealed) 93 C. Terluran HI-10 product data
+    #           sheet (rev. 08/01/2022), https://www.chemdo.com/uploads/INEOS-HI-10.pdf
+    #   CG 28   ELIX Polymers CADON CG 28, high rubber: 27 % butadiene, as its
+    #           datasheet states, 1020 kg/m^3, 1600 MPa, 35 MPa. CADON CG 28
+    #           datasheet (UL Prospector copy), https://www.sushengpolymer.com/media/pdf/Gn18IK_CADON-CG-28.pdf
+    #   HH-112  INEOS Styrolution Novodur HH-112, high heat, made with
+    #           alpha-methylstyrene (the product-safety section of its
+    #           datasheet names it): 1050 kg/m^3, 2700 MPa, 58 MPa, 0.17 W/(m*K)
+    #           (DIN 52612-1), HDT A (annealed) 102 C. Novodur HH-112 product
+    #           data sheet (rev. 10/15/19), https://plasticker.de/docs/recybase/35956_1765437910.pdf
+    #   GF17    A. Schulman POLYMAN FABS 17 GF, ABS with 17 % glass fibre:
+    #           1160 kg/m^3, 5000 MPa, 60 MPa at break. Datasheet (UL Prospector
+    #           copy), https://sushengpolymer.com/media/pdf/CaYGK7_POLYMAN-FABS-17-GF.pdf
+    #   GF30    RTP Company RTP 605, ABS with 30 % glass fibre: specific gravity
+    #           1.27, 8964 MPa and 97 MPa at break (ASTM D638). RTP 605 product
+    #           data sheet (15 Jan 2019), https://protolabs.com/media/kwmh5z31/rtp-605.pdf
+    #   PA-757  Chi Mei POLYLAC PA-757, general purpose: 1050 kg/m^3, 54 MPa,
+    #           flexural modulus 2200 MPa (ISO 178). Datasheet (UL Prospector
+    #           copy), https://sushengpolymer.com/media/pdf/F9RuQT_POLYLAC-PA-757.pdf
+    #   PA-765  Chi Mei POLYLAC PA-765, the same maker's UL 94 V-0 grade:
+    #           1190 kg/m^3, 39 MPa, flexural modulus 1800 MPa (ISO 178).
+    #           Datasheet (UL Prospector copy), https://sushengpolymer.com/media/pdf/DM22pK_POLYLAC-PA-765.pdf
+    #           Chi Mei's safety data sheet gives its composition as more than
+    #           65 % ABS, less than 17 % tetrabromobisphenol A and less than 5 %
+    #           antimony trioxide: POLYLAC FR-ABS (PA-765, PA-765A, PA-765B)
+    #           safety data sheet (rev. June 1, 2015), https://www.protolabs.com/media/kmxj4krm/en-polylac-pa-765-natural.pdf
+    #
+    # The composition is in mass fractions of the polymer, and styrene is the
+    # rest. No producer here publishes how much rubber, acrylonitrile or
+    # alpha-methylstyrene a moulding grade holds, CG 28's rubber apart, so
+    # where a grade's composition is needed it is an estimate:
+    # * butadiene: SAN is 0 and CG 28 0.27. GP-35 and HI-10 are placed at 0.18
+    #   and 0.23, estimated from their moduli: linearly between SAN's and
+    #   CG 28's, rubber being what lowers it. Named without values, abs is
+    #   GP-35, at 0.18.
+    # * acrylonitrile: 0.20 for every grade, a guess; it moves the density and
+    #   nothing else here (see 'density'). The bounds are the 15 to 35 % the
+    #   article 'url' names, the top narrowed to 30 % so that styrene stays
+    #   the rest.
+    # * alpha_methylstyrene: HH-112 is placed at 0.4, an estimate from US patent
+    #   4,272,584 (Borg-Warner, 1981), which says an ABS needs about 35 % of it
+    #   for a heat deflection temperature of 212 F (100 C) and 45 % or more for
+    #   221 F (105 C), ASTM D648 at 1.82 MPa, https://patents.google.com/patent/US4272584A/en
+    #   Everything that sets HH-112 apart from GP-35 is put down to it.
+    # * flame_retardant: PA-765 is placed at 0.22, the most its safety data
+    #   sheet allows (17 % and 5 %): an upper bound, not a measured content.
+    parameters:
+      acrylonitrile: {type: float, default: 0.2, min: 0.15, max: 0.3, desc: "mass fraction of the polymer that is acrylonitrile"}
+      butadiene: {type: float, default: 0.18, min: 0, max: 0.27, desc: "mass fraction of the polymer that is butadiene rubber; 0 is SAN"}
+      alpha_methylstyrene: {type: float, default: 0, min: 0, max: 0.4, desc: "mass fraction of the polymer that is alpha-methylstyrene, in place of styrene, for heat resistance"}
+      glass: {type: float, default: 0, min: 0, max: 0.3, desc: "mass fraction of the compound that is chopped glass fibre"}
+      flame_retardant: {type: float, default: 0, min: 0, max: 0.22, desc: "mass fraction of the compound that is flame retardant: tetrabromobisphenol A and antimony trioxide, 17 to 5"}
+    # kg/m^3, computed as a specific volume (1/density), which the parts of a
+    # mixture add up to by mass:
+    # * the butadiene: SAN 1080, GP-35 1040, HI-10 1030 and CG 28 1020,
+    #   interpolated in between;
+    # * acrylonitrile in place of styrene: estimated from the specific volumes
+    #   of the two homopolymers - polyacrylonitrile 1175, the middle of the
+    #   1170-1180 Goodfellow gives (Goodfellow, Polyacrylonitrile PAN - Powder -
+    #   Material Information, https://www.goodfellow.com/usa/resources/polyacrylonitrile-pan-powder-material-information/),
+    #   and polystyrene 1040 (INEOS Styrolution PS 158N/L, ISO 1183; datasheet
+    #   (UL Prospector copy), https://sushengpolymer.com/media/pdf/6F389a_Styrolution-PS-158N-L.pdf);
+    # * alpha-methylstyrene: HH-112's 1050 at 0.4, interpolated from GP-35's;
+    # * glass: what GF17's 1160 and GF30's 1270 take off the specific volume of
+    #   GP-35, standing in for the general-purpose ABS they are compounded from
+    #   (their makers do not name it), interpolated in between;
+    # * flame retardant: what PA-765's 1190 takes off the specific volume of
+    #   PA-757's 1050, at 0.22, interpolated from none.
+    # A compound with more than one of these adds their effects up: an estimate.
+    density: >-
+      %round(1 / (1 / interpolate(butadiene, [0, 0.18, 0.23, 0.27], [1080, 1040, 1030, 1020])
+      + (acrylonitrile - 0.2) * (1 / 1175 - 1 / 1040)
+      + interpolate(alpha_methylstyrene, [0, 0.4], [0, 1 / 1050 - 1 / 1040])
+      - interpolate(glass, [0, 0.17, 0.3], [0, 1 / 1040 - 1 / 1160, 1 / 1040 - 1 / 1270])
+      - interpolate(flame_retardant, [0, 0.22], [0, 1 / 1050 - 1 / 1190])))%
+    # Pa: through the butadiene, SAN 3700, GP-35 2300, HI-10 1900 and CG 28
+    # 1600 MPa, interpolated in between; HH-112's 400 MPa over GP-35 at 0.4
+    # alpha-methylstyrene, interpolated; times what glass multiplies it by -
+    # GF17's 5000 and GF30's 8964 MPa over GP-35's 2300, at 17 % and 30 %, the
+    # compounds' base taken for a general-purpose ABS like it (an estimate) -
+    # and times what the flame retardant does to PA-765's flexural modulus
+    # against PA-757's (1800 and 2200 MPa, ISO 178), taken to do the same to
+    # the tensile one (an estimate). Acrylonitrile is taken to change none of
+    # it: no series of grades that differ in it alone is published.
+    youngsModulus: >-
+      %round((interpolate(butadiene, [0, 0.18, 0.23, 0.27], [3.7e9, 2.3e9, 1.9e9, 1.6e9])
+      + interpolate(alpha_methylstyrene, [0, 0.4], [0, 4.0e8]))
+      * interpolate(glass, [0, 0.17, 0.3], [1, 5000 / 2300, 8964 / 2300])
+      * interpolate(flame_retardant, [0, 0.22], [1, 1800 / 2200]), -6)%
+    poissonsRatio: 0.35 # ABS, unfilled (handbook); 23 C. Machinery's Handbook, 31st ed. (Industrial Press, 2020), 'Stress and Strain in Plastics', Table 1 'Poisson's Ratio at 23 C for Resins and Compounds', p. 566; viewed at https://online.flippingbook.com/view/954192180/629/ -- held for every composition, which for a filled grade is a guess
+    # Pa: through the butadiene, SAN 72, GP-35 44, HI-10 38 and CG 28 35 MPa,
+    # interpolated in between; HH-112's 14 MPa over GP-35 at 0.4
+    # alpha-methylstyrene, interpolated; times what glass multiplies it by -
+    # GF17's 60 and GF30's 97 MPa at break over GP-35's 44, as for the modulus;
+    # a glass-filled grade breaks without yielding, so this is its stress at
+    # break - and times PA-765's 39 MPa over PA-757's 54 for the flame
+    # retardant, interpolated from none.
+    yieldStrength: >-
+      %round((interpolate(butadiene, [0, 0.18, 0.23, 0.27], [7.2e7, 4.4e7, 3.8e7, 3.5e7])
+      + interpolate(alpha_methylstyrene, [0, 0.4], [0, 1.4e7]))
+      * interpolate(glass, [0, 0.17, 0.3], [1, 60 / 44, 97 / 44])
+      * interpolate(flame_retardant, [0, 0.22], [1, 39 / 54]), -5)%
+    thermalConductivity: 0.17 # W/(m*K): SAN, GP-35, HI-10 and HH-112 all state 0.17 (sources above), whatever their rubber; held at it for the glass and flame-retardant compounds, whose datasheets state none - a guess, and a low one for glass
     tags:
       - heat-resistant
       - impact-resistant
       - chemical-resistant
+  abs-high-heat:
+    type: enrich
+    source: ":abs"
+    formal: ABS (high heat)
+    full: Heat-resistant Acrylonitrile Butadiene Styrene
+    desc: |
+      ABS in which alpha-methylstyrene takes the place of much of the styrene,
+      which keeps it stiff some ten degrees hotter and makes it stiffer and
+      stronger cold, at the cost of some toughness: automotive rear lamp
+      housings, glove box lids and interior parts that sit in the sun, and
+      housings near a motor or a lamp.
+    # The heat deflection temperature, mapped onto abs's alpha-methylstyrene
+    # through the two grades that state it: Terluran GP-35 at 92 C with none,
+    # and Novodur HH-112 at 102 C, placed at 0.4 (see abs), interpolated in
+    # between. Named without values it is Novodur HH-112.
+    parameters:
+      hdt: {type: float, default: 102, min: 92, max: 102, desc: "heat deflection temperature, C: ISO 75-2/A (1.8 MPa), annealed 4 h at 80 C"}
+    with:
+      alpha_methylstyrene: "%round(interpolate(hdt, [92, 102], [0, 0.4]), 3)%"
+    tags:
+      - heat-resistant
+      - stiff
+      - automotive
+  abs-high-impact:
+    type: enrich
+    source: ":abs"
+    formal: ABS (high impact)
+    full: High-impact Acrylonitrile Butadiene Styrene
+    desc: |
+      ABS with more rubber in it, which trades some stiffness and strength for
+      toughness, down to low temperatures: appliance and power-tool housings,
+      garden and outdoor equipment, luggage, and parts that get dropped.
+    # The notched Izod impact strength, mapped onto abs's butadiene through the
+    # two grades that state it: Terluran GP-35 at 22 kJ/m^2 and Terluran HI-10
+    # at 36 kJ/m^2, placed at 0.18 and 0.23 (see abs), interpolated in between.
+    # Named without values it is Terluran HI-10.
+    parameters:
+      izod: {type: float, default: 36, min: 22, max: 36, desc: "notched Izod impact strength at 23 C, kJ/m^2: ISO 180/1A"}
+    with:
+      butadiene: "%round(interpolate(izod, [22, 36], [0.18, 0.23]), 3)%"
+    tags:
+      - impact-resistant
+      - tough
   asa:
     formal: ASA
     full: Acrylonitrile Styrene Acrylate
@@ -128,11 +344,30 @@ materials:
       it is attacked by many solvents, and it is notorious for cracking later
       where it was left stressed or attacked by the wrong adhesive.
     url: https://en.wikipedia.org/wiki/Polycarbonate
-    density: 1200
-    youngsModulus: 2.35e+9 # Pa, SABIC (GE Plastics) Lexan 141R; ISO 527-1/-2, 1 mm/min, injection-moulded, 23 C. GE Plastics, PC LEXAN 141R datasheet (09 Feb 2005), https://rolec.com/fileadmin/Media/58/d3/Datenblatt_technoCASE_PC_LEXAN%2B141R_en.pdf
-    poissonsRatio: 0.37 # Polycarbonate (handbook); 23 C. Machinery's Handbook, 31st ed. (Industrial Press, 2020), 'Stress and Strain in Plastics', Table 1 'Poisson's Ratio at 23 C for Resins and Compounds', p. 566; viewed at https://online.flippingbook.com/view/954192180/629/
-    yieldStrength: 6.3e+7 # Pa, SABIC (GE Plastics) Lexan 141R; ISO 527 tensile stress at yield, 50 mm/min, 23 C. GE Plastics, PC LEXAN 141R datasheet (09 Feb 2005), https://rolec.com/fileadmin/Media/58/d3/Datenblatt_technoCASE_PC_LEXAN%2B141R_en.pdf
-    thermalConductivity: 0.2 # W/(m*K), SABIC (GE Plastics) Lexan 141R; ISO 8302. GE Plastics, PC LEXAN 141R datasheet (09 Feb 2005), https://rolec.com/fileadmin/Media/58/d3/Datenblatt_technoCASE_PC_LEXAN%2B141R_en.pdf
+    # The grades every number below is computed through, all SABIC LEXAN,
+    # ISO 527 at 23 C, thermal conductivity ISO 8302:
+    #   unfilled  LEXAN 141R: 1200 kg/m^3, 2350 MPa, 63 MPa, 0.20 W/(m*K).
+    #             GE Plastics, PC LEXAN 141R datasheet (09 Feb 2005),
+    #             https://rolec.com/fileadmin/Media/58/d3/Datenblatt_technoCASE_PC_LEXAN%2B141R_en.pdf
+    #   10 %      LEXAN 500R: 1250 kg/m^3, 3300 MPa, 60 MPa at yield,
+    #             0.21 W/(m*K). SABIC, LEXAN Resin 500R datasheet
+    #             (Europe-Africa-Middle East), https://plasticker.de/docs/recybase/8536_1719306946.pdf
+    #   20 %      LEXAN 3412R: 1350 kg/m^3, 6000 MPa, 90 MPa at break,
+    #             0.22 W/(m*K). Datasheet (UL Prospector copy),
+    #             https://sushengpolymer.com/media/pdf/tPdaWH_LEXAN3412Rresin.pdf
+    #   30 %      LEXAN 3413R: 1440 kg/m^3, 9000 MPa, 100 MPa at break,
+    #             0.22 W/(m*K). Datasheet (UL Prospector copy),
+    #             https://sushengpolymer.com/media/pdf/Wdoqwq_LEXAN3413Rresin.pdf
+    # The three glass-filled grades are flame retardant (UL 94 V-0) as well,
+    # and the flame retardant is in their numbers. Named without values, pc is
+    # LEXAN 141R.
+    parameters:
+      glass: {type: float, default: 0, min: 0, max: 0.3, desc: "mass fraction of chopped glass fibre"}
+    density: "%round(interpolate(glass, [0, 0.1, 0.2, 0.3], [1200, 1250, 1350, 1440]))%" # kg/m^3: the four grades above, interpolated in between
+    youngsModulus: "%round(interpolate(glass, [0, 0.1, 0.2, 0.3], [2.35e9, 3.3e9, 6.0e9, 9.0e9]), -6)%" # Pa: the four grades above (ISO 527-1/-2, 1 mm/min), interpolated in between
+    poissonsRatio: 0.37 # Polycarbonate (handbook); 23 C. Machinery's Handbook, 31st ed. (Industrial Press, 2020), 'Stress and Strain in Plastics', Table 1 'Poisson's Ratio at 23 C for Resins and Compounds', p. 566; viewed at https://online.flippingbook.com/view/954192180/629/ -- held for the glass-filled grades, a guess
+    yieldStrength: "%round(interpolate(glass, [0, 0.1, 0.2, 0.3], [6.3e7, 6.0e7, 9.0e7, 1.0e8]), -5)%" # Pa: 141R's and 500R's tensile stress at yield; 3412R and 3413R break without yielding, and theirs is the stress at break; interpolated in between
+    thermalConductivity: "%round(interpolate(glass, [0, 0.1, 0.2, 0.3], [0.2, 0.21, 0.22, 0.22]), 3)%" # W/(m*K): the four grades above (ISO 8302), interpolated in between
     tags:
       - impact-resistant
       - transparent
@@ -166,16 +401,101 @@ materials:
       Hard to bond or paint without treating the surface first, and it creeps
       under sustained load.
     url: https://en.wikipedia.org/wiki/Polypropylene
-    density: 905
-    youngsModulus: 1.7e+9 # Pa, SABIC PP 575P (homopolymer, injection moulding); ISO 527-2/1A/1, 23 C. SABIC PP 575P datasheet (UL Prospector copy), https://sushengpolymer.com/media/pdf/EbXGHq_SABIC-PP-575P.pdf
-    yieldStrength: 3.6e+7 # Pa, SABIC PP 575P (homopolymer, injection moulding); ISO 527-2/1A/50 tensile stress at yield, 23 C. SABIC PP 575P datasheet (UL Prospector copy), https://sushengpolymer.com/media/pdf/EbXGHq_SABIC-PP-575P.pdf
-    thermalConductivity: 0.2 # W/(m*K), Roechling Polystone P homopolymer (PP-H sheet); DIN 52612-1. Roechling, Polystone P (Homopolymer) EHS natural technical data sheet [718584], https://roechling.com/fileadmin/assets/Technical%20Data%20Sheet%20Polystone%C2%AE%20P%20(Homopolymer)%20EHS%20natural%20718584%20ES.pdf
+    # The grades every number below is computed through, ISO 527 at 23 C:
+    #   homopolymer  SABIC PP 575P: 905 kg/m^3, 1700 MPa, 36 MPa. SABIC PP 575P
+    #                datasheet (UL Prospector copy), https://sushengpolymer.com/media/pdf/EbXGHq_SABIC-PP-575P.pdf
+    #   copolymer    SABIC PP 83MF10, an impact (block) copolymer: 905 kg/m^3,
+    #                1200 MPa, 23 MPa. SABIC PP 83MF10 datasheet (UL Prospector
+    #                copy), https://sushengpolymer.com/media/pdf/Rkunxy_SABIC-PP-83MF10.pdf
+    #   mineral      LyondellBasell Hostacom M2 N01 and M4 N01 L201218, PP
+    #                homopolymer 20 % and 40 % mineral filled: 1050 and
+    #                1210 kg/m^3, 2700 and 3600 MPa (secant), 32 and 32 MPa.
+    #                Datasheets (UL Prospector copies),
+    #                https://sushengpolymer.com/media/pdf/F7ry2B_Hostacom-M2-N01.pdf
+    #                and https://sushengpolymer.com/media/pdf/WSqc9e_Hostacom-M4-N01-L201218.pdf
+    #   glass        LyondellBasell Hostacom G3 N01, PP homopolymer with 30 %
+    #                coupled glass: 1130 kg/m^3, 6500 MPa (secant), 85 MPa at
+    #                break. Datasheet (UL Prospector copy),
+    #                https://sushengpolymer.com/media/pdf/2SVHZl_Hostacom-G3-N01-102297.pdf
+    # Named without values, pp is SABIC PP 575P.
+    parameters:
+      copolymer: {type: bool, default: false, desc: "an impact (block) copolymer with ethylene rather than a homopolymer"}
+      mineral: {type: float, default: 0, min: 0, max: 0.4, desc: "mass fraction of mineral filler (in PP, usually talc)"}
+      glass: {type: float, default: 0, min: 0, max: 0.3, desc: "mass fraction of chopped glass fibre"}
+    # kg/m^3: 905 for the homopolymer and the copolymer alike; plus what the
+    # mineral (Hostacom M2 N01, M4 N01) and glass (G3 N01) add to it,
+    # interpolated from none; both together add up, an estimate.
+    density: "%round(905 + interpolate(mineral, [0, 0.2, 0.4], [0, 145, 305]) + interpolate(glass, [0, 0.3], [0, 225]))%"
+    # Pa: SABIC PP 575P's 1700 MPa, plus what the mineral and the glass add to
+    # it at the Hostacom grades' fractions, interpolated from none; for a copolymer,
+    # times 83MF10's 1200 MPa over 575P's 1700, which for a filled copolymer
+    # is an estimate.
+    youngsModulus: >-
+      %round((1.7e9 + interpolate(mineral, [0, 0.2, 0.4], [0, 1.0e9, 1.9e9])
+      + interpolate(glass, [0, 0.3], [0, 4.8e9])) * (1200 / 1700 if copolymer else 1), -6)%
+    # Pa: SABIC PP 575P's 36 MPa yield, plus what the mineral (the Hostacom M
+    # grades yield at 32 MPa) and glass (G3 N01 breaks at 85 MPa without yielding:
+    # its stress at break) do to it, interpolated from none; for a copolymer,
+    # times 83MF10's 23 MPa over 575P's 36, which for a filled copolymer is an
+    # estimate.
+    yieldStrength: >-
+      %round((3.6e7 + interpolate(mineral, [0, 0.2, 0.4], [0, -4.0e6, -4.0e6])
+      + interpolate(glass, [0, 0.3], [0, 4.9e7])) * (23 / 36 if copolymer else 1), -5)%
+    # W/(m*K): Roechling Polystone P homopolymer (PP-H sheet); DIN 52612-1.
+    # Roechling, Polystone P (Homopolymer) EHS natural technical data sheet
+    # [718584], https://roechling.com/fileadmin/assets/Technical%20Data%20Sheet%20Polystone%C2%AE%20P%20(Homopolymer)%20EHS%20natural%20718584%20ES.pdf
+    # The copolymer sheet states the same 0.20: Roechling, Polystone P
+    # copolymer PG + UV-stabilized beige [718605],
+    # https://www.roechling.com/industrial/materials/thermoplastics/industrial-plastics/pp-c/polystone-p-copolymer-pg-uv-stabilized-beige-718605
+    # Held for the mineral- and glass-filled grades, whose datasheets state
+    # none: a guess.
+    thermalConductivity: 0.2
     tags:
       - low-cost
       - chemical-resistant
       - fatigue-resistant
       - automotive
+  pe:
+    formal: PE
+    full: Polyethylene
+    desc: |
+      The commonest plastic there is, as a range of densities: the more
+      crystalline - the denser - the stiffer and stronger, from soft, tough
+      low-density film, tubing, squeeze bottles and cable sheathing to rigid
+      high-density tanks, pipe, crates and wear strips. Chemically almost
+      inert, tough in the cold, and effectively unglueable.
+    url: https://en.wikipedia.org/wiki/Polyethylene
+    # The grades every number below is computed through, ISO 527 at 23 C:
+    #   919  LyondellBasell Lupolen 1800 H (LDPE): 200 MPa, 9 MPa. Datasheet
+    #        (UL Prospector copy), https://sushengpolymer.com/media/pdf/xW8MdP_Lupolen-1800-H.pdf
+    #   920  Roechling Polystone E natural (PE-LD sheet): 0.35 W/(m*K)
+    #        (DIN 52612-1). Roechling, Polystone E natural extruded technical
+    #        data sheet [591123] (24/09/2025), https://www.roechling.com/fileadmin/assets/23/11/Polystone%C2%AE%20E%20natural%20extruded%20%E2%80%93%20Technical%20Data%20Sheet%20(IT)%20%5B591123%5D.pdf
+    #   950  Roechling Polystone G natur (PE-HD, PE 300 sheet): 1000 MPa,
+    #        25 MPa, 0.4 W/(m*K) (DIN 52612-1). Roechling, Polystone G natur
+    #        (PE-HD / PE 300) Technisches Datenblatt, version 12.0 (17/07/2024),
+    #        https://www.roechling.com/fileadmin/assets/Polystone%C2%AE%20G%20natur%20%E2%80%93%20Technisches%20Datenblatt%20%28DE%29.pdf
+    #   960  LyondellBasell Hostalen GC 7260 (HDPE): 1450 MPa, 30 MPa.
+    #        LyondellBasell, Hostalen GC 7260 product data sheet,
+    #        https://plasticker.de/docs/recybase/35582_1774360368.pdf
+    # Modulus and yield follow the crystallinity, which the density measures;
+    # between the grades they are interpolated linearly in it, which follows
+    # it only roughly - an estimate. Named without values, pe is Polystone G,
+    # at 950.
+    parameters:
+      density: {type: float, default: 950, min: 919, max: 960, desc: "density, kg/m^3, from an LDPE's to an HDPE's"}
+    density: "%density%" # kg/m^3, the parameter
+    youngsModulus: "%round(interpolate(density, [919, 950, 960], [2.0e8, 1.0e9, 1.45e9]), -6)%" # Pa: Lupolen 1800 H, Polystone G and Hostalen GC 7260, interpolated in between
+    yieldStrength: "%round(interpolate(density, [919, 950, 960], [9.0e6, 2.5e7, 3.0e7]), -5)%" # Pa: Lupolen 1800 H, Polystone G and Hostalen GC 7260, interpolated in between
+    thermalConductivity: "%round(interpolate(density, [920, 950], [0.35, 0.4]), 3)%" # W/(m*K): Polystone E and Polystone G, interpolated in between; held at Polystone G's above 950, where no grade here states one - a guess
+    tags:
+      - low-cost
+      - chemical-resistant
   hdpe:
+    type: enrich
+    source: ":pe"
+    with:
+      density: 950 # kg/m^3, Roechling Polystone G natur (PE-HD, PE 300), DIN EN ISO 1183-1: the grade this entry's numbers are (see pe)
     formal: HDPE
     full: High-density Polyethylene
     desc: |
@@ -184,15 +504,28 @@ materials:
       low temperatures, unaffected by most chemicals, and effectively unglueable
       - it is welded instead.
     url: https://en.wikipedia.org/wiki/High-density_polyethylene
-    density: 950
-    youngsModulus: 1.0e+9 # Pa, Roechling Polystone G natur (PE-HD, PE 300); DIN EN ISO 527, extruded/pressed sheet, 23 C. Roechling, Polystone G natur (PE-HD / PE 300) Technisches Datenblatt, version 12.0 (17/07/2024), https://www.roechling.com/fileadmin/assets/Polystone%C2%AE%20G%20natur%20%E2%80%93%20Technisches%20Datenblatt%20%28DE%29.pdf
-    yieldStrength: 2.5e+7 # Pa, Roechling Polystone G natur (PE-HD, PE 300); DIN EN ISO 527 yield stress, 23 C. Roechling, Polystone G natur (PE-HD / PE 300) Technisches Datenblatt, version 12.0 (17/07/2024), https://www.roechling.com/fileadmin/assets/Polystone%C2%AE%20G%20natur%20%E2%80%93%20Technisches%20Datenblatt%20%28DE%29.pdf
-    thermalConductivity: 0.4 # W/(m*K), Roechling Polystone G natur (PE-HD, PE 300); DIN 52612-1. Roechling, Polystone G natur (PE-HD / PE 300) Technisches Datenblatt, version 12.0 (17/07/2024), https://www.roechling.com/fileadmin/assets/Polystone%C2%AE%20G%20natur%20%E2%80%93%20Technisches%20Datenblatt%20%28DE%29.pdf
     tags:
       - low-cost
       - chemical-resistant
       - low-friction
       - automotive
+  ldpe:
+    type: enrich
+    source: ":pe"
+    with:
+      density: 919 # kg/m^3, LyondellBasell Lupolen 1800 H (LDPE), ISO 1183 (see pe)
+    formal: LDPE
+    full: Low-density Polyethylene
+    desc: |
+      The soft, tough, translucent polyethylene: film and bags, squeeze
+      bottles, caps and closures, tubing, cable sheathing and liners. Far
+      more flexible than HDPE, weaker and less heat resistant, and just as
+      hard to glue.
+    url: https://en.wikipedia.org/wiki/Low-density_polyethylene
+    tags:
+      - low-cost
+      - chemical-resistant
+      - flexible
   pvc:
     formal: PVC
     full: Polyvinyl Chloride
@@ -217,7 +550,100 @@ materials:
   #
   # Engineering thermoplastics
   #
+  pa66:
+    formal: PA66
+    full: Polyamide 66 (Nylon 66)
+    desc: |
+      The nylon of most moulded engineering parts: stiff, strong and tough,
+      and at home in oil and grease. Unfilled it makes
+      bearings, gears, cable ties and connectors; filled with glass or carbon
+      fibre it makes brackets, housings, intake manifolds and motor mounts.
+      It takes up water from the air, and is softer and weaker for it - a
+      part in service is nearer its conditioned values than its dry ones.
+    url: https://en.wikipedia.org/wiki/Nylon_66
+    # The grades every number below is computed through, ISO 527 at 23 C, dry
+    # as moulded / conditioned at 23 C and 50 % relative humidity:
+    #   unfilled  DuPont Zytel 101L NC010: 1140 kg/m^3, 3100 / 1400 MPa,
+    #             82 / 55 MPa at yield, Poisson's ratio 0.37 / 0.43,
+    #             0.24 W/(m*K) (ISO 22007-2). DuPont, Zytel 101L NC010 product
+    #             information (ISO data), https://quickparts.com/wp-content/uploads/2023/04/zytel%C2%AE-101l-nc010-gb.pdf
+    #   glass     BASF Ultramid A3WG3, A3EG5, A3EG6, A3EG7 and A3EG10, with 15,
+    #             25, 30, 35 and 50 % glass fibre: 1230, 1320, 1360, 1410 and
+    #             1560 kg/m^3; 6000 / 4500, 8600 / 6500, 10000 / 7200,
+    #             11500 / 8500 and 16800 / 12500 MPa; 130 / 85, 175 / 120,
+    #             190 / 130, 210 / 150 and 240 / 180 MPa at break; 0.33, 0.34,
+    #             0.35, 0.35 and 0.37 W/(m*K) (DIN 52612-1), where the unfilled
+    #             Ultramid A3K has 0.33. BASF, Ultramid (PA) Product Range
+    #             (Europe), October 2025, https://download.basf.com/p1/8a8081c57fd4b609017fdf6c58512210/en/Ultramid%253Csup%253E%25C2%25AE%253Csup%253E_%2528PA%2529_%25E2%2580%2592_Product_Range
+    #             A3EG6's own datasheet gives the same 1.36 g/cm^3, 10000 / 7200
+    #             MPa and 190 / 130 MPa: BASF, Ultramid A3EG6 datasheet (UL
+    #             Prospector copy), https://sushengpolymer.com/media/pdf/VD8rbH_Ultramid-A3EG6.pdf
+    #             DuPont Zytel 70G33HS1L, 33 % glass fibre: Poisson's ratio
+    #             0.34 dry and conditioned. Datasheet (UL Prospector copy),
+    #             https://www.protolabs.com/media/hxudykda/zytel-70g33hs1l.pdf
+    #   carbon    SABIC LNP THERMOCOMP RC004SXS, 20 % carbon fibre: specific
+    #             gravity 1.23, 16700 MPa, 242 MPa at break, dry. Datasheet (UL
+    #             Prospector copy), https://sushengpolymer.com/media/pdf/g2RoOx_LNP-THERMOCOMP-RC004SXS-compound.pdf
+    #             AKRO-PLASTIC AKROMID A3 ICF 30 black (5021), 30 % carbon
+    #             fibre: 1280 kg/m^3, 24000 / 15000 MPa, 240 / 170 MPa at break,
+    #             0.42 W/(m*K) (DIN 52612). https://akro-plastic.com/en/product/akromid-a3-icf-30-black-5021-en
+    # The filled grades break without yielding, and their 'yieldStrength' is
+    # their stress at break. Named without values, pa66 is Zytel 101L, dry.
+    parameters:
+      glass: {type: float, default: 0, min: 0, max: 0.5, desc: "mass fraction of chopped glass fibre"}
+      carbon: {type: float, default: 0, min: 0, max: 0.3, desc: "mass fraction of chopped carbon fibre"}
+      conditioned: {type: bool, default: false, desc: "conditioned to equilibrium at 23 C and 50 % relative humidity, as a part in service is, rather than dry as moulded"}
+    # kg/m^3, as moulded: through the glass, Zytel 101L and the five Ultramid
+    # grades, interpolated in between; plus what RC004SXS and A3 ICF 30 add to
+    # Zytel 101L for carbon, interpolated from none. Glass and carbon together
+    # add up: an estimate.
+    density: >-
+      %round(interpolate(glass, [0, 0.15, 0.25, 0.3, 0.35, 0.5], [1140, 1230, 1320, 1360, 1410, 1560])
+      + interpolate(carbon, [0, 0.2, 0.3], [0, 90, 140]))%
+    # Pa, dry: through the glass, Zytel 101L and the five Ultramid grades,
+    # interpolated in between; plus what RC004SXS (20 %) and A3 ICF 30 (30 %)
+    # add to Zytel 101L for carbon. Conditioned: times the conditioned-to-dry
+    # ratio of the same grades - for glass the Ultramid grades', for carbon
+    # A3 ICF 30's against unfilled, interpolated from none, the two multiplied
+    # for a compound with both (an estimate).
+    youngsModulus: >-
+      %round((interpolate(glass, [0, 0.15, 0.25, 0.3, 0.35, 0.5], [3.1e9, 6.0e9, 8.6e9, 1.0e10, 1.15e10, 1.68e10])
+      + interpolate(carbon, [0, 0.2, 0.3], [0, 1.36e10, 2.09e10]))
+      * (interpolate(glass, [0, 0.15, 0.25, 0.3, 0.35, 0.5], [1400 / 3100, 4500 / 6000, 6500 / 8600, 7200 / 10000, 8500 / 11500, 12500 / 16800])
+      * interpolate(carbon, [0, 0.3], [1, (15000 / 24000) / (1400 / 3100)]) if conditioned else 1), -6)%
+    # Zytel 101L's 0.37 dry and 0.43 conditioned, falling to Zytel 70G33HS1L's
+    # 0.34 (both) at 33 % fibre, interpolated in between; carbon fibre is
+    # counted with the glass, for want of a value for it (an estimate).
+    poissonsRatio: "%round(interpolate(glass + carbon, [0, 0.33], [0.43 if conditioned else 0.37, 0.34]), 2)%"
+    # Pa, dry: Zytel 101L's yield, then the Ultramid grades' and RC004SXS's
+    # and A3 ICF 30's stress at break (a filled grade breaks without
+    # yielding), interpolated and added as for the modulus - the two carbon
+    # grades, from two makers, come out level: 242 MPa at 20 % and 240 at
+    # 30 %. Conditioned: times the same grades' conditioned-to-dry ratio, as
+    # for the modulus.
+    yieldStrength: >-
+      %round((interpolate(glass, [0, 0.15, 0.25, 0.3, 0.35, 0.5], [8.2e7, 1.3e8, 1.75e8, 1.9e8, 2.1e8, 2.4e8])
+      + interpolate(carbon, [0, 0.2, 0.3], [0, 1.6e8, 1.58e8]))
+      * (interpolate(glass, [0, 0.15, 0.25, 0.3, 0.35, 0.5], [55 / 82, 85 / 130, 120 / 175, 130 / 190, 150 / 210, 180 / 240])
+      * interpolate(carbon, [0, 0.3], [1, (170 / 240) / (55 / 82)]) if conditioned else 1), -5)%
+    # W/(m*K): Zytel 101L's 0.24 (ISO 22007-2), times what glass does to
+    # Ultramid's own 0.33 (DIN 52612-1) at each of its grades, interpolated in
+    # between, and times A3 ICF 30's 0.42 over Ultramid A3K's 0.33 for 30 %
+    # carbon (both DIN 52612), interpolated from none - ratios, because the
+    # two methods disagree about unfilled PA66 itself. Held whether dry or
+    # conditioned, a guess.
+    thermalConductivity: >-
+      %round(0.24 * interpolate(glass, [0, 0.15, 0.25, 0.3, 0.35, 0.5], [1, 1, 0.34 / 0.33, 0.35 / 0.33, 0.35 / 0.33, 0.37 / 0.33])
+      * interpolate(carbon, [0, 0.3], [1, 0.42 / 0.33]), 3)%
+    color: "%':carbon-black' if carbon > 0 else ''%" # carbon fibre makes it black through; claims nothing unfilled or with glass alone
+    tags:
+      - durable
+      - abrasion-resistant
+      - heat-resistant
+      - automotive
   nylon:
+    type: enrich
+    source: ":pa66" # named without values: Zytel 101L, dry, the grade this entry's numbers have always been (see pa66)
     formal: Nylon
     full: Nylon
     desc: |
@@ -227,16 +653,55 @@ materials:
       It is tough, flexible, and non-biodegradable.
       However, due to its structure it is prone to absorb water which causes a chemical change of the material and effects the material properties.
     url: https://en.wikipedia.org/wiki/Nylon
-    density: 1150
-    youngsModulus: 3.1e+9 # Pa, DuPont Zytel 101L NC010 (PA66, unreinforced); ISO 527-1/-2, dry as moulded, 23 C. DuPont, Zytel 101L NC010 product information (ISO data), https://quickparts.com/wp-content/uploads/2023/04/zytel%C2%AE-101l-nc010-gb.pdf
-    poissonsRatio: 0.37 # DuPont Zytel 101L NC010 (PA66, unreinforced); dry as moulded. DuPont, Zytel 101L NC010 product information (ISO data), https://quickparts.com/wp-content/uploads/2023/04/zytel%C2%AE-101l-nc010-gb.pdf
-    yieldStrength: 8.2e+7 # Pa, DuPont Zytel 101L NC010 (PA66, unreinforced); ISO 527-1/-2 yield stress, 50 mm/min, dry as moulded, 23 C. DuPont, Zytel 101L NC010 product information (ISO data), https://quickparts.com/wp-content/uploads/2023/04/zytel%C2%AE-101l-nc010-gb.pdf
-    thermalConductivity: 0.24 # W/(m*K), DuPont Zytel 101L NC010 (PA66, unreinforced); ISO 22007-2. DuPont, Zytel 101L NC010 product information (ISO data), https://quickparts.com/wp-content/uploads/2023/04/zytel%C2%AE-101l-nc010-gb.pdf
     mu: 0.3 # dry against polished steel
     tags:
       - durable
       - abrasion-resistant
       - flexible
+  pa6:
+    formal: PA6
+    full: Polyamide 6 (Nylon 6)
+    desc: |
+      The other common nylon: a little softer, tougher and easier to mould
+      than PA66, with a lower melting point and more appetite for water.
+      Housings, fittings, fan impellers, clamps and wall plugs unfilled;
+      intake manifolds, pedals and brackets glass filled.
+    url: https://en.wikipedia.org/wiki/Nylon_6
+    # The grades every number below is computed through, all BASF Ultramid, ISO
+    # 527 at 23 C, dry as moulded / conditioned at 23 C and 50 % relative
+    # humidity, thermal conductivity DIN 52612-1:
+    #   unfilled  B3K: 1130 kg/m^3, 3100 / 1000 MPa, 85 / 40 MPa at yield,
+    #             0.33 W/(m*K)
+    #   15 %      B3EG3: 1230 kg/m^3, 5800 / 3500 MPa, 130 / 70 MPa at break, 0.34
+    #   25 %      B3EG5: 1320 kg/m^3, 8000 / 5500 MPa, 160 / 105 MPa at break, 0.35
+    #   30 %      B3EG6: 1360 kg/m^3, 9500 / 6200 MPa, 185 / 115 MPa at break, 0.36
+    #   35 %      B3WG7: 1410 kg/m^3, 11000 / 7200 MPa, 195 / 130 MPa at break, 0.36
+    #   40 %      B3G8: 1430 kg/m^3, 13000 / 8200 MPa, 205 / 135 MPa at break, 0.36
+    #   50 %      B3WG10: 1550 kg/m^3, 16000 / 11000 MPa, 235 / 160 MPa at break, 0.38
+    # BASF, Ultramid (PA) Product Range (Europe), October 2025,
+    # https://download.basf.com/p1/8a8081c57fd4b609017fdf6c58512210/en/Ultramid%253Csup%253E%25C2%25AE%253Csup%253E_%2528PA%2529_%25E2%2580%2592_Product_Range
+    # The filled grades break without yielding, and their 'yieldStrength' is
+    # their stress at break. Named without values, pa6 is Ultramid B3K, dry.
+    parameters:
+      glass: {type: float, default: 0, min: 0, max: 0.5, desc: "mass fraction of chopped glass fibre"}
+      conditioned: {type: bool, default: false, desc: "conditioned to equilibrium at 23 C and 50 % relative humidity, as a part in service is, rather than dry as moulded"}
+    density: "%round(interpolate(glass, [0, 0.15, 0.25, 0.3, 0.35, 0.4, 0.5], [1130, 1230, 1320, 1360, 1410, 1430, 1550]))%" # kg/m^3, as moulded: the seven grades above, interpolated in between
+    # Pa: the seven grades above, dry or conditioned, interpolated in between
+    youngsModulus: >-
+      %round(interpolate(glass, [0, 0.15, 0.25, 0.3, 0.35, 0.4, 0.5],
+      [1.0e9, 3.5e9, 5.5e9, 6.2e9, 7.2e9, 8.2e9, 1.1e10] if conditioned
+      else [3.1e9, 5.8e9, 8.0e9, 9.5e9, 1.1e10, 1.3e10, 1.6e10]), -6)%
+    # Pa: the seven grades above, dry or conditioned - B3K's yield, the rest
+    # their stress at break - interpolated in between
+    yieldStrength: >-
+      %round(interpolate(glass, [0, 0.15, 0.25, 0.3, 0.35, 0.4, 0.5],
+      [4.0e7, 7.0e7, 1.05e8, 1.15e8, 1.3e8, 1.35e8, 1.6e8] if conditioned
+      else [8.5e7, 1.3e8, 1.6e8, 1.85e8, 1.95e8, 2.05e8, 2.35e8]), -5)%
+    thermalConductivity: "%round(interpolate(glass, [0, 0.15, 0.25, 0.3, 0.35, 0.4, 0.5], [0.33, 0.34, 0.35, 0.36, 0.36, 0.36, 0.38]), 3)%" # W/(m*K): the seven grades above, interpolated in between; held whether dry or conditioned, a guess
+    tags:
+      - durable
+      - abrasion-resistant
+      - automotive
   pa12:
     formal: PA12
     full: Polyamide 12 (Nylon 12)
@@ -247,15 +712,35 @@ materials:
       machine. Tough and flexible at low temperature, and weaker and pricier
       than PA66.
     url: https://en.wikipedia.org/wiki/Nylon_12
-    density: 1010
-    youngsModulus: 1.7e+9 # Pa, EOS PA 2200 (PA12, laser sintered); DIN EN ISO 527, laser-sintered parts, 23 C. EOS, Product Information 'Feinpolyamide PA 2200 for EOSINT P', https://www.amf.uzh.ch/dam/jcr:59a8b14a-c212-4693-8443-d5e543aeabe2/Material-Data-PA2200-ENGLISH.pdf
-    thermalConductivity: 0.136 # W/(m*K), EOS PA 2200 (PA12, laser sintered); DIN 52616. EOS, Product Information 'Feinpolyamide PA 2200 for EOSINT P', https://www.amf.uzh.ch/dam/jcr:59a8b14a-c212-4693-8443-d5e543aeabe2/Material-Data-PA2200-ENGLISH.pdf
+    # Laser-sintered PA12, the grades every number below is computed through:
+    #   unfilled     EOS PA 2200: 930 kg/m^3 (EOS method; the older product
+    #                information below gives 900-950), 1700 MPa (DIN EN ISO
+    #                527), 0.136 W/(m*K) (DIN 52616, the mean of 0.144 across
+    #                and 0.127 along the sintered layers). EOS, Product
+    #                Information 'Feinpolyamide PA 2200 for EOSINT P',
+    #                https://www.amf.uzh.ch/dam/jcr:59a8b14a-c212-4693-8443-d5e543aeabe2/Material-Data-PA2200-ENGLISH.pdf
+    #                and EOS, material data sheet PA 2200,
+    #                https://www.eos.info/polymer-solutions/polymer-materials/data-sheets/mds-pa-2200
+    #   glass beads  EOS PA 3200 GF, 'filled with glass beads (40 wt%)':
+    #                1220 kg/m^3, 3200 MPa in X and Y. EOS, material data sheet
+    #                PA 3200 GF, https://www.eos.info/polymer-solutions/polymer-materials/data-sheets/mds-pa-3200-gf
+    # A sintered part is a little porous, which is why it is lighter than
+    # moulded PA12. Named without values, pa12 is EOS PA 2200.
+    parameters:
+      glass_beads: {type: float, default: 0, min: 0, max: 0.4, desc: "mass fraction of glass beads in the sintering powder"}
+    density: "%round(interpolate(glass_beads, [0, 0.4], [930, 1220]))%" # kg/m^3, laser sintered: PA 2200 and PA 3200 GF, interpolated in between
+    youngsModulus: "%round(interpolate(glass_beads, [0, 0.4], [1.7e9, 3.2e9]), -6)%" # Pa, laser sintered, 23 C: PA 2200 and PA 3200 GF (X and Y), interpolated in between
+    thermalConductivity: 0.136 # W/(m*K), EOS PA 2200 (PA12, laser sintered); DIN 52616. EOS, Product Information 'Feinpolyamide PA 2200 for EOSINT P', https://www.amf.uzh.ch/dam/jcr:59a8b14a-c212-4693-8443-d5e543aeabe2/Material-Data-PA2200-ENGLISH.pdf -- held for the glass-bead-filled grade, whose data sheet states none: a guess
     tags:
       - dimensionally-stable
       - chemical-resistant
       - flexible
       - printable
   pa66-gf30:
+    type: enrich
+    source: ":pa66"
+    with:
+      glass: 0.3 # BASF Ultramid A3EG6, the grade this entry's numbers are, dry (see pa66)
     formal: PA66-GF30
     full: Polyamide 66 with 30% glass fibre
     desc: |
@@ -266,9 +751,6 @@ materials:
       to whatever the part runs against, and the fibres leave the moulded part
       stiffer along the flow than across it.
     url: https://en.wikipedia.org/wiki/Nylon_66
-    density: 1370
-    youngsModulus: 1.0e+10 # Pa, BASF Ultramid A3EG6 (PA66-GF30); ISO 527-2, dry as moulded, 23 C. BASF, Ultramid A3EG6 datasheet (UL Prospector copy), https://sushengpolymer.com/media/pdf/VD8rbH_Ultramid-A3EG6.pdf
-    poissonsRatio: 0.34 # DuPont Zytel 70G33HS1L (PA66-GF33); ISO 527, dry as moulded. DuPont, Zytel 70G33HS1L NC010 datasheet (UL Prospector copy), https://www.protolabs.com/media/hxudykda/zytel-70g33hs1l.pdf
     tags:
       - glass-filled
       - stiff
@@ -285,8 +767,9 @@ materials:
       stiffer and less prone to warp than unfilled nylon, still nowhere near a
       continuous-fibre laminate, and it wants a hardened nozzle.
     url: https://en.wikipedia.org/wiki/Carbon-fiber-reinforced_polymer
-    density: 1200
+    density: 1170 # kg/m^3, Polymaker Fiberon PA6-CF20; ISO 1183, 23 C. Polymaker, Fiberon PA6-CF20 Technical Data Sheet V1.1, https://fiberon.polymaker.com/wp-content/uploads/TDS_FIBERON-PA6-CF20_V1.1_EN.pdf
     youngsModulus: 8.64e+9 # Pa, Polymaker Fiberon PA6-CF20 (printed); ISO 527, printed X-Y direction, dry, 100% infill. Polymaker, Fiberon PA6-CF20 Technical Data Sheet V1.1, https://fiberon.polymaker.com/wp-content/uploads/TDS_FIBERON-PA6-CF20_V1.1_EN.pdf
+    color: :carbon-black # its carbon fibre makes it black through
     tags:
       - carbon-filled
       - stiff
@@ -303,11 +786,23 @@ materials:
       parts, and anything small turned out of rod. It is hard to bond, it
       burns rather than resists flame, and it is attacked by strong acids.
     url: https://en.wikipedia.org/wiki/Polyoxymethylene
-    density: 1410
-    youngsModulus: 3.15e+9 # Pa, DuPont Delrin 100 NC010 (POM homopolymer); ISO 527-2, injection-moulded, 23 C. DuPont, Delrin 100 NC010 datasheet (UL Prospector copy), https://sushengpolymer.com/media/pdf/L1RBhh_Delrin-100-NC010.pdf
+    # Acetal is sold as a homopolymer (Delrin) and as a copolymer, a little
+    # less stiff and strong. The grades every number below is one of, ISO 527
+    # at 23 C:
+    #   homopolymer  DuPont Delrin 100 NC010: 1420 kg/m^3, 3150 MPa, 72 MPa.
+    #                DuPont, Delrin 100 NC010 datasheet (UL Prospector copy),
+    #                https://sushengpolymer.com/media/pdf/L1RBhh_Delrin-100-NC010.pdf
+    #   copolymer    Celanese HOSTAFORM C 9021: 1410 kg/m^3, 2850 MPa, 64 MPa.
+    #                Celanese, HOSTAFORM C 9021 CAMPUS datasheet,
+    #                https://plasticker.de/docs/recybase/41683_1747933985.pdf
+    # Named without values, pom is Delrin 100.
+    parameters:
+      copolymer: {type: bool, default: false, desc: "an acetal copolymer rather than the homopolymer"}
+    density: "%1410 if copolymer else 1420%" # kg/m^3, ISO 1183: the two grades above
+    youngsModulus: "%2.85e9 if copolymer else 3.15e9%" # Pa, ISO 527, injection-moulded, 23 C: the two grades above
     poissonsRatio: 0.35 # Acetal (handbook); 23 C. Machinery's Handbook, 31st ed. (Industrial Press, 2020), 'Stress and Strain in Plastics', Table 1 'Poisson's Ratio at 23 C for Resins and Compounds', p. 566; viewed at https://online.flippingbook.com/view/954192180/629/
-    yieldStrength: 7.2e+7 # Pa, DuPont Delrin 100 NC010 (POM homopolymer); ISO 527-2 tensile stress at yield, 23 C. DuPont, Delrin 100 NC010 datasheet (UL Prospector copy), https://sushengpolymer.com/media/pdf/L1RBhh_Delrin-100-NC010.pdf
-    thermalConductivity: 0.36 # W/(m*K), Quadrant EPP Delrin acetal (stock shape); ASTM F433. Quadrant Engineering Plastic Products, Quadrant EPP Delrin Acetal datasheet (UL Prospector copy), https://sushengpolymer.com/media/pdf/mstbvC_Quadrant-EPP-Delrin-Acetal.pdf
+    yieldStrength: "%6.4e7 if copolymer else 7.2e7%" # Pa, ISO 527 tensile stress at yield, 23 C: the two grades above
+    thermalConductivity: 0.36 # W/(m*K), Quadrant EPP Delrin acetal (stock shape); ASTM F433. Quadrant Engineering Plastic Products, Quadrant EPP Delrin Acetal datasheet (UL Prospector copy), https://sushengpolymer.com/media/pdf/mstbvC_Quadrant-EPP-Delrin-Acetal.pdf -- held for the copolymer, whose datasheet states none: a guess
     mu: 0.2 # dry against polished steel
     tags:
       - low-friction
@@ -369,11 +864,31 @@ materials:
       implants, and printed parts where nothing cheaper survives. It costs
       roughly a hundred times what ABS does.
     url: https://en.wikipedia.org/wiki/Polyether_ether_ketone
-    density: 1300
-    youngsModulus: 4.0e+9 # Pa, Victrex PEEK 450G; ISO 527-1, injection-moulded, 23 C. Victrex, VICTREX PEEK 450G datasheet, https://www.victrex.com/en/downloads/datasheets/victrex-peek-450g
-    yieldStrength: 9.8e+7 # Pa, Victrex PEEK 450G; ISO 527-2 tensile stress at yield, 23 C. Victrex, VICTREX PEEK 450G datasheet, https://www.victrex.com/en/downloads/datasheets/victrex-peek-450g
-    thermalConductivity: 0.29 # W/(m*K), Victrex PEEK 450G; ISO 22007-4, 23 C, averaged. Victrex, VICTREX PEEK 450G datasheet, https://www.victrex.com/en/downloads/datasheets/victrex-peek-450g
-    mu: 0.35 # dry against polished steel
+    # The grades every number below is computed through, all Victrex, ISO 527
+    # at 23 C, thermal conductivity ISO 22007-4 at 23 C (the first of the two
+    # values each datasheet gives, as for 450G):
+    #   unfilled  VICTREX PEEK 450G: 1300 kg/m^3, 4000 MPa, 98 MPa at yield,
+    #             0.29 W/(m*K). https://www.victrex.com/en/downloads/datasheets/victrex-peek-450g
+    #   glass     VICTREX PEEK 450GL30, 30 % glass fibre: 1510 kg/m^3,
+    #             11500 MPa, 179 MPa at break, 0.30 W/(m*K).
+    #             https://www.victrex.com/en/downloads/datasheets/victrex-peek-450gl30
+    #   carbon    VICTREX PEEK 450CA30, 30 % carbon fibre: 1400 kg/m^3,
+    #             28000 MPa, 265 MPa at break, 0.95 W/(m*K).
+    #             https://www.victrex.com/en/downloads/datasheets/victrex-peek-450ca30
+    # Each fibre's effect is interpolated linearly from none to 30 %, which is
+    # the one filled grade of each sourced here (an estimate in between), and
+    # glass and carbon together add up (an estimate). The filled grades break
+    # without yielding, and their 'yieldStrength' is their stress at break.
+    # Named without values, peek is 450G.
+    parameters:
+      glass: {type: float, default: 0, min: 0, max: 0.3, desc: "mass fraction of chopped glass fibre"}
+      carbon: {type: float, default: 0, min: 0, max: 0.3, desc: "mass fraction of chopped carbon fibre"}
+    density: "%round(1300 + interpolate(glass, [0, 0.3], [0, 210]) + interpolate(carbon, [0, 0.3], [0, 100]))%" # kg/m^3, ISO 1183: 450G, plus 450GL30's and 450CA30's over it
+    youngsModulus: "%round(4.0e9 + interpolate(glass, [0, 0.3], [0, 7.5e9]) + interpolate(carbon, [0, 0.3], [0, 2.4e10]), -6)%" # Pa: 450G, plus 450GL30's and 450CA30's over it
+    yieldStrength: "%round(9.8e7 + interpolate(glass, [0, 0.3], [0, 8.1e7]) + interpolate(carbon, [0, 0.3], [0, 1.67e8]), -5)%" # Pa: 450G's yield, plus what 450GL30's and 450CA30's stress at break add to it
+    thermalConductivity: "%round(0.29 + interpolate(glass, [0, 0.3], [0, 0.01]) + interpolate(carbon, [0, 0.3], [0, 0.66]), 3)%" # W/(m*K): 450G, plus 450GL30's and 450CA30's over it
+    mu: 0.35 # dry against polished steel -- unfilled PEEK; held for the filled grades, a guess
+    color: "%':carbon-black' if carbon > 0 else ''%" # carbon fibre makes it black through; claims nothing unfilled or with glass alone
     tags:
       - high-temperature
       - chemical-resistant
@@ -390,11 +905,25 @@ materials:
       grade printed as ULTEM 9085 is what much of the certified printed flight
       hardware is made of.
     url: https://en.wikipedia.org/wiki/Polyetherimide
-    density: 1270
-    youngsModulus: 3.58e+9 # Pa, SABIC Ultem 1000; ASTM D638 Type I, 5 mm/min, 23 C. SABIC, ULTEM Resin 1000 (Americas) technical data sheet, https://Protolabs.com/media/1020056/ultem-resin_1000_americas_technical_data_sheet.pdf
-    poissonsRatio: 0.36 # SABIC Ultem 1000; ASTM E132. SABIC, ULTEM Resin 1000 (Americas) technical data sheet, https://Protolabs.com/media/1020056/ultem-resin_1000_americas_technical_data_sheet.pdf
-    yieldStrength: 1.1e+8 # Pa, SABIC Ultem 1000; ASTM D638 tensile stress at yield, 23 C. SABIC, ULTEM Resin 1000 (Americas) technical data sheet, https://Protolabs.com/media/1020056/ultem-resin_1000_americas_technical_data_sheet.pdf
-    thermalConductivity: 0.22 # W/(m*K), SABIC Ultem 1000; ASTM C177. SABIC, ULTEM Resin 1000 (Americas) technical data sheet, https://Protolabs.com/media/1020056/ultem-resin_1000_americas_technical_data_sheet.pdf
+    # The grades every number below is computed through, SABIC ULTEM, ASTM
+    # D638 at 23 C:
+    #   unfilled  ULTEM 1000: specific gravity 1.27, 3580 MPa, 110 MPa at yield,
+    #             Poisson's ratio 0.36, 0.22 W/(m*K) (ASTM C177). SABIC, ULTEM
+    #             Resin 1000 (Americas) technical data sheet,
+    #             https://Protolabs.com/media/1020056/ultem-resin_1000_americas_technical_data_sheet.pdf
+    #   30 %      ULTEM 2300, 30 % glass fibre: specific gravity 1.51, 9300 MPa,
+    #             168 MPa at yield. SABIC, ULTEM Resin 2300 (Americas) technical
+    #             data sheet (revision 20190717),
+    #             https://Protolabs.com/media/1020057/ultem-resin_2300_americas_technical_data_sheet.pdf
+    # Interpolated linearly in between, an estimate. Named without values, pei
+    # is ULTEM 1000.
+    parameters:
+      glass: {type: float, default: 0, min: 0, max: 0.3, desc: "mass fraction of chopped glass fibre"}
+    density: "%round(interpolate(glass, [0, 0.3], [1270, 1510]))%" # kg/m^3: ULTEM 1000 and 2300
+    youngsModulus: "%round(interpolate(glass, [0, 0.3], [3.58e9, 9.3e9]), -6)%" # Pa, ASTM D638 Type I, 5 mm/min, 23 C: ULTEM 1000 and 2300
+    poissonsRatio: 0.36 # SABIC Ultem 1000; ASTM E132. SABIC, ULTEM Resin 1000 (Americas) technical data sheet, https://Protolabs.com/media/1020056/ultem-resin_1000_americas_technical_data_sheet.pdf -- held for the glass-filled grades, a guess
+    yieldStrength: "%round(interpolate(glass, [0, 0.3], [1.1e8, 1.68e8]), -5)%" # Pa, ASTM D638 tensile stress at yield, 23 C: ULTEM 1000 and 2300
+    thermalConductivity: 0.22 # W/(m*K), SABIC Ultem 1000; ASTM C177. SABIC, ULTEM Resin 1000 (Americas) technical data sheet, https://Protolabs.com/media/1020056/ultem-resin_1000_americas_technical_data_sheet.pdf -- held for the glass-filled grades, whose data sheet states none: a guess
     tags:
       - high-temperature
       - flame-retardant
@@ -410,9 +939,27 @@ materials:
       thermostat and throttle bodies, connectors, sensor bodies and fuel-system
       parts. Brittle, and it needs a hot mould.
     url: https://en.wikipedia.org/wiki/Polyphenylene_sulfide
-    density: 1350
-    youngsModulus: 4.0e+9 # Pa, Celanese Fortron 0205 (unfilled PPS); ISO 527-2/1A/1, 23 C. Celanese, Fortron 0205 datasheet (UL Prospector copy), https://sushengpolymer.com/media/pdf/GGawrU_Fortron-0205.pdf
-    poissonsRatio: 0.38 # Fortron PPS, unfilled; design-manual value. Ticona/Celanese, 'Designing with Fortron Polyphenylene Sulfide' design manual (FN-10), section 'Poisson's Ratio', https://ww3.cad.de/foren/ubb/uploads/pmax/Fortron_FN-10_3.9.07.pdf
+    # The grades every number below is computed through, Celanese Fortron, ISO
+    # 527 at 23 C:
+    #   unfilled  Fortron 0205: 1350 kg/m^3 (ISO 1183), 4000 MPa. Celanese,
+    #             Fortron 0205 datasheet (UL Prospector copy),
+    #             https://sushengpolymer.com/media/pdf/GGawrU_Fortron-0205.pdf
+    #   40 %      Fortron 1140L4, 40 % glass fibre: 1650 kg/m^3 (ISO 1183),
+    #             14700 MPa. Celanese, Fortron 1140L4 datasheet (UL Prospector
+    #             copy), https://sushengpolymer.com/media/pdf/xrlMl1_Fortron-1140L4.pdf
+    # Interpolated linearly in between, an estimate. PPS breaks at 2 % strain
+    # without yielding, filled or not, and this entry states no yield.
+    # Named without values, pps is Fortron 0205.
+    parameters:
+      glass: {type: float, default: 0, min: 0, max: 0.4, desc: "mass fraction of chopped glass fibre"}
+    density: "%round(interpolate(glass, [0, 0.4], [1350, 1650]))%" # kg/m^3: Fortron 0205 and 1140L4
+    youngsModulus: "%round(interpolate(glass, [0, 0.4], [4.0e9, 1.47e10]), -6)%" # Pa, ISO 527-2/1A/1, 23 C: Fortron 0205 and 1140L4
+    # Fortron PPS, unfilled 0.38 and glass- or mineral/glass-reinforced 0.35, as
+    # the design manual gives them: Ticona/Celanese, 'Designing with Fortron
+    # Polyphenylene Sulfide' design manual (FN-10), section 'Poisson's Ratio',
+    # https://ww3.cad.de/foren/ubb/uploads/pmax/Fortron_FN-10_3.9.07.pdf --
+    # placed at none and at 1140L4's 40 %, interpolated in between (an estimate).
+    poissonsRatio: "%round(interpolate(glass, [0, 0.4], [0.38, 0.35]), 3)%"
     tags:
       - high-temperature
       - chemical-resistant
@@ -435,6 +982,7 @@ materials:
       it is electrically conductive, and it corrodes aluminium it touches.
     url: https://en.wikipedia.org/wiki/Carbon-fiber-reinforced_polymer
     density: 1550
+    color: :carbon-black # its carbon fibre makes it black through
     tags:
       - composite
       - lightweight
@@ -461,6 +1009,18 @@ materials:
   #
   # Elastomers
   #
+  # A rubber is bought by its hardness, and its stiffness follows from it:
+  # each of these takes its Shore A hardness as 'shore' and computes its
+  # Young's modulus from it by Gent's relation (the macro at the top of this
+  # file) - an estimate, valid from 40 Shore A up. Density and conductivity
+  # depend on the compound's filler rather than its hardness, and are stated
+  # as before. The defaults: Parker's O-Ring Handbook says that 'for most
+  # applications, compounds having a Shore A durometer hardness of 70 to 80 is
+  # the most suitable compromise' (Parker Hannifin, Parker O-Ring Handbook
+  # ORD 5700 (2018), section 2.4.2 'Hardness',
+  # https://www.marcorubber.com/downloads/Parker_O-Ring_Handbook_ORD_5700.pdf),
+  # and the compounds it lists for these rubbers include N0674-70 (nitrile,
+  # 70 Shore A), V0747-75 (fluorocarbon, 75) and S0604-70 (silicone, 70).
   tpu:
     formal: TPU
     full: Thermoplastic Polyurethane
@@ -471,7 +1031,14 @@ materials:
       resistant and tough for its hardness, and it hydrolyses over time in hot
       water.
     url: https://en.wikipedia.org/wiki/Thermoplastic_polyurethane
+    # 85 Shore A by default: the hardness of BASF Elastollan 1185A, a TPU for
+    # extruded profile, sheet and film (ASTM D2240). Elastollan 1185A10
+    # datasheet (UL Prospector copy),
+    # https://sushengpolymer.com/media/pdf/gUdS2H_Elastollan-1185A10.pdf
+    parameters:
+      shore: {type: float, default: 85, min: 40, max: 95, desc: "hardness, Shore A"}
     density: 1210
+    youngsModulus: "%{{ gent('shore') }}%" # Pa, estimated from the hardness by Gent's relation (see the top of this file)
     tags:
       - elastomer
       - abrasion-resistant
@@ -487,7 +1054,13 @@ materials:
       suspension bushings and anti-vibration pads. Ozone, sunlight, oil and
       fuel all attack it, so it stays away from anything petroleum.
     url: https://en.wikipedia.org/wiki/Natural_rubber
+    # 60 Shore A by default: a guess at the middle of the mounts, bushings and
+    # wheels natural rubber is used for, which are not seals and which the
+    # Parker guidance above does not cover.
+    parameters:
+      shore: {type: float, default: 60, min: 40, max: 90, desc: "hardness, Shore A"}
     density: 930
+    youngsModulus: "%{{ gent('shore') }}%" # Pa, estimated from the hardness by Gent's relation (see the top of this file)
     thermalConductivity: 0.15 # W/(m*K), natural rubber, vulcanized; 25 C. C. J. M. Lasance, 'The Thermal Conductivity of Rubbers/Elastomers', Electronics Cooling, Nov 2001, table 'Thermal conductivity of rubbers/elastomers at 25 C', https://www.electronics-cooling.com/2001/11/the-thermal-conductivity-of-rubbers-elastomers/
     mu: 1.0 # rubber on a dry hard surface - the road or floor a wheel runs on
     tags:
@@ -504,7 +1077,11 @@ materials:
       fuel hose liners and hydraulic seals are made of it. Cheap and hard
       wearing, up to about 100 C, and poor in ozone, sunlight and brake fluid.
     url: https://en.wikipedia.org/wiki/Nitrile_rubber
+    # 70 Shore A by default: Parker's nitrile N0674-70 (see above).
+    parameters:
+      shore: {type: float, default: 70, min: 40, max: 90, desc: "hardness, Shore A"}
     density: 1000
+    youngsModulus: "%{{ gent('shore') }}%" # Pa, estimated from the hardness by Gent's relation (see the top of this file)
     thermalConductivity: 0.24 # W/(m*K), nitrile rubber (NBR); 25 C. C. J. M. Lasance, 'The Thermal Conductivity of Rubbers/Elastomers', Electronics Cooling, Nov 2001, table 'Thermal conductivity of rubbers/elastomers at 25 C', https://www.electronics-cooling.com/2001/11/the-thermal-conductivity-of-rubbers-elastomers/
     tags:
       - elastomer
@@ -520,7 +1097,12 @@ materials:
       sunlight, steam and water where NBR perishes, and it swells and fails in
       fuel and mineral oil, which is the trade it makes.
     url: https://en.wikipedia.org/wiki/EPDM_rubber
+    # 70 Shore A by default: the softer end of the 70 to 80 Parker recommends
+    # for most seals (see above).
+    parameters:
+      shore: {type: float, default: 70, min: 40, max: 90, desc: "hardness, Shore A"}
     density: 1150
+    youngsModulus: "%{{ gent('shore') }}%" # Pa, estimated from the hardness by Gent's relation (see the top of this file)
     tags:
       - elastomer
       - weatherable
@@ -535,7 +1117,11 @@ materials:
       hardware. It holds up in hot oil, fuel and most chemicals to around
       200 C, several times the price, and it is poor in steam and in the cold.
     url: https://en.wikipedia.org/wiki/FKM
+    # 75 Shore A by default: Parker's fluorocarbon V0747-75 (see above).
+    parameters:
+      shore: {type: float, default: 75, min: 40, max: 90, desc: "hardness, Shore A"}
     density: 1800
+    youngsModulus: "%{{ gent('shore') }}%" # Pa, estimated from the hardness by Gent's relation (see the top of this file)
     tags:
       - elastomer
       - high-temperature
@@ -552,7 +1138,13 @@ materials:
       the moulds other things are cast in. Mechanically weak - it tears easily
       and abrades quickly - and it swells in fuel and oil.
     url: https://en.wikipedia.org/wiki/Silicone_rubber
+    # 70 Shore A by default: Parker's silicone S0604-70 (see above).
+    # The soft casting silicones of soft robotics are below 40 Shore A, where
+    # Gent's relation stops holding, and are outside this parameter's range.
+    parameters:
+      shore: {type: float, default: 70, min: 40, max: 90, desc: "hardness, Shore A"}
     density: 1200
+    youngsModulus: "%{{ gent('shore') }}%" # Pa, estimated from the hardness by Gent's relation (see the top of this file)
     thermalConductivity: 0.14 # W/(m*K), silicone rubber (VMQ); 25 C. C. J. M. Lasance, 'The Thermal Conductivity of Rubbers/Elastomers', Electronics Cooling, Nov 2001, table 'Thermal conductivity of rubbers/elastomers at 25 C', https://www.electronics-cooling.com/2001/11/the-thermal-conductivity-of-rubbers-elastomers/
     tags:
       - elastomer
