@@ -28,6 +28,17 @@ desc: Standard polymers - thermoplastics, composites and elastomers - as PartCAD
 #   which. It is stated only where the tables agree; where they do not, it is
 #   left out rather than invented, and a part made of such a material gets the
 #   simulator's default exactly as it did before anybody catalogued it.
+# What an analysis of a part made of one of these is solved with -- the
+# 'youngsModulus' (Pa), 'poissonsRatio', 'yieldStrength' (Pa) and
+# 'thermalConductivity' (W/(m*K)) beside each density -- is stated only where it
+# is known for the material named, and the comment beside each value says which
+# grade, in which condition, and where the number comes from. A property that is
+# absent was not known well enough to state: a part made of the material is then
+# analysed at the implementation's own default for it, which is visibly a
+# default, rather than at a guess that looks like a fact. PartCAD 0.10.17 and
+# later read these keys and hand them to a part's analyses. An older one ignores
+# them, and only its 'pc lint' reports them as unknown, so the 'partcad:' floor
+# above stays where it is: nothing an older PartCAD reads here has changed.
 materials:
   #
   # Commodity and printable thermoplastics
@@ -42,6 +53,9 @@ materials:
     url: https://en.wikipedia.org/wiki/Polylactic_acid
     # img: images/pla.png
     density: 1320 # kg/m^3
+    youngsModulus: 3.6e+9 # Pa, NatureWorks Ingeo 4043D; ASTM D882, 23 C (as on the NatureWorks TDS; resin data, not a printed part). NatureWorks, Ingeo Biopolymer 4043D Technical Data Sheet (3D printing monofilament grade), https://cdn.shopify.com/s/files/1/1223/5992/files/PLA_4043D_TDS.pdf
+    yieldStrength: 6.0e+7 # Pa, NatureWorks Ingeo 4043D; ASTM D882 tensile yield strength, 23 C. NatureWorks, Ingeo Biopolymer 4043D Technical Data Sheet (3D printing monofilament grade), https://cdn.shopify.com/s/files/1/1223/5992/files/PLA_4043D_TDS.pdf
+    thermalConductivity: 0.13 # W/(m*K), generic PLA filament (SD3D); ASTM C518, room temperature. SD3D, PLA Technical Data Sheet (printed filament), hosted at https://3dp.seas.harvard.edu/files/2023/01/PLAMDS.pdf
     tags:
       - low-cost
       - impact-resistant
@@ -58,6 +72,10 @@ materials:
       and the acrylonitrile provideds the chemical resistance and heat stablitity.
     url: https://en.wikipedia.org/wiki/Acrylonitrile_butadiene_styrene
     density: 1070
+    youngsModulus: 2.3e+9 # Pa, INEOS Styrolution Terluran GP-35; ISO 527, injection-moulded specimen, 23 C. INEOS Styrolution, Terluran GP-35 product data sheet (rev. 05/30/16), https://www.tekogehause.de/uploads/manuali/materiali/TERLURAN%20C-35.pdf
+    poissonsRatio: 0.35 # ABS, unfilled (handbook); 23 C. Machinery's Handbook, 31st ed. (Industrial Press, 2020), 'Stress and Strain in Plastics', Table 1 'Poisson's Ratio at 23 C for Resins and Compounds', p. 566; viewed at https://online.flippingbook.com/view/954192180/629/
+    yieldStrength: 4.4e+7 # Pa, INEOS Styrolution Terluran GP-35; ISO 527 tensile stress at yield, 23 C. INEOS Styrolution, Terluran GP-35 product data sheet (rev. 05/30/16), https://www.tekogehause.de/uploads/manuali/materiali/TERLURAN%20C-35.pdf
+    thermalConductivity: 0.17 # W/(m*K), INEOS Styrolution Terluran GP-35; DIN 52612-1. INEOS Styrolution, Terluran GP-35 product data sheet (rev. 05/30/16), https://www.tekogehause.de/uploads/manuali/materiali/TERLURAN%20C-35.pdf
     tags:
       - heat-resistant
       - impact-resistant
@@ -73,6 +91,9 @@ materials:
       printed parts for robots that live outside.
     url: https://en.wikipedia.org/wiki/Acrylonitrile_styrene_acrylate
     density: 1070
+    youngsModulus: 2.3e+9 # Pa, INEOS Styrolution Luran S 777K; ISO 527-1, injection-moulded specimen, 23 C. INEOS Styrolution Luran S 777K datasheet (UL Prospector copy), https://protolabs.com/media/43bexs4t/luran-s-777k.pdf
+    yieldStrength: 4.8e+7 # Pa, INEOS Styrolution Luran S 777K; ISO 527-2 tensile stress at yield, 23 C. INEOS Styrolution Luran S 777K datasheet (UL Prospector copy), https://protolabs.com/media/43bexs4t/luran-s-777k.pdf
+    thermalConductivity: 0.17 # W/(m*K), INEOS Styrolution Luran S 777K; DIN 52612. INEOS Styrolution Luran S 777K datasheet (UL Prospector copy), https://protolabs.com/media/43bexs4t/luran-s-777k.pdf
     tags:
       - uv-resistant
       - weatherable
@@ -89,6 +110,9 @@ materials:
       most printed fixtures that have to survive being handled.
     url: https://en.wikipedia.org/wiki/Polyethylene_terephthalate
     density: 1270
+    youngsModulus: 2.1e+9 # Pa, Eastman Eastar 6763 copolyester (PETG); ISO 527 (ASTM D638 gives the same), injection-moulded, 23 C. Eastman, Eastar Copolyester 6763 Technical Data Sheet, https://plasticker.de/docs/recybase/43561_1720088124.pdf
+    yieldStrength: 5.0e+7 # Pa, Eastman Eastar 6763 copolyester (PETG); ISO 527 tensile stress at yield, 23 C. Eastman, Eastar Copolyester 6763 Technical Data Sheet, https://plasticker.de/docs/recybase/43561_1720088124.pdf
+    thermalConductivity: 0.21 # W/(m*K), Eastman Eastar 6763 copolyester (PETG); ASTM C177. Eastman, Eastar Copolyester 6763 Technical Data Sheet, https://plasticker.de/docs/recybase/43561_1720088124.pdf
     tags:
       - impact-resistant
       - chemical-resistant
@@ -105,6 +129,10 @@ materials:
       where it was left stressed or attacked by the wrong adhesive.
     url: https://en.wikipedia.org/wiki/Polycarbonate
     density: 1200
+    youngsModulus: 2.35e+9 # Pa, SABIC (GE Plastics) Lexan 141R; ISO 527-1/-2, 1 mm/min, injection-moulded, 23 C. GE Plastics, PC LEXAN 141R datasheet (09 Feb 2005), https://rolec.com/fileadmin/Media/58/d3/Datenblatt_technoCASE_PC_LEXAN%2B141R_en.pdf
+    poissonsRatio: 0.37 # Polycarbonate (handbook); 23 C. Machinery's Handbook, 31st ed. (Industrial Press, 2020), 'Stress and Strain in Plastics', Table 1 'Poisson's Ratio at 23 C for Resins and Compounds', p. 566; viewed at https://online.flippingbook.com/view/954192180/629/
+    yieldStrength: 6.3e+7 # Pa, SABIC (GE Plastics) Lexan 141R; ISO 527 tensile stress at yield, 50 mm/min, 23 C. GE Plastics, PC LEXAN 141R datasheet (09 Feb 2005), https://rolec.com/fileadmin/Media/58/d3/Datenblatt_technoCASE_PC_LEXAN%2B141R_en.pdf
+    thermalConductivity: 0.2 # W/(m*K), SABIC (GE Plastics) Lexan 141R; ISO 8302. GE Plastics, PC LEXAN 141R datasheet (09 Feb 2005), https://rolec.com/fileadmin/Media/58/d3/Datenblatt_technoCASE_PC_LEXAN%2B141R_en.pdf
     tags:
       - impact-resistant
       - transparent
@@ -120,6 +148,9 @@ materials:
       anything that has to be seen through and not touched much.
     url: https://en.wikipedia.org/wiki/Acrylic_glass
     density: 1180
+    youngsModulus: 3.3e+9 # Pa, Roehm PLEXIGLAS GS (cast acrylic sheet); ISO 527-2/1B/1, 23 C. Roehm, PLEXIGLAS GS/XT Technical Information, Ref. No. 211-1 (04/25), https://www.voskunststoffen.nl/files/166151/datasheet%20plexiglas%20XT%20GS.pdf
+    poissonsRatio: 0.37 # Roehm PLEXIGLAS GS (cast acrylic sheet); ISO 527-1. Roehm, PLEXIGLAS GS/XT Technical Information, Ref. No. 211-1 (04/25), https://www.voskunststoffen.nl/files/166151/datasheet%20plexiglas%20XT%20GS.pdf
+    thermalConductivity: 0.19 # W/(m*K), Roehm PLEXIGLAS GS (cast acrylic sheet); DIN 52612. Roehm, PLEXIGLAS GS/XT Technical Information, Ref. No. 211-1 (04/25), https://www.voskunststoffen.nl/files/166151/datasheet%20plexiglas%20XT%20GS.pdf
     tags:
       - transparent
       - uv-resistant
@@ -136,6 +167,9 @@ materials:
       under sustained load.
     url: https://en.wikipedia.org/wiki/Polypropylene
     density: 905
+    youngsModulus: 1.7e+9 # Pa, SABIC PP 575P (homopolymer, injection moulding); ISO 527-2/1A/1, 23 C. SABIC PP 575P datasheet (UL Prospector copy), https://sushengpolymer.com/media/pdf/EbXGHq_SABIC-PP-575P.pdf
+    yieldStrength: 3.6e+7 # Pa, SABIC PP 575P (homopolymer, injection moulding); ISO 527-2/1A/50 tensile stress at yield, 23 C. SABIC PP 575P datasheet (UL Prospector copy), https://sushengpolymer.com/media/pdf/EbXGHq_SABIC-PP-575P.pdf
+    thermalConductivity: 0.2 # W/(m*K), Roechling Polystone P homopolymer (PP-H sheet); DIN 52612-1. Roechling, Polystone P (Homopolymer) EHS natural technical data sheet [718584], https://roechling.com/fileadmin/assets/Technical%20Data%20Sheet%20Polystone%C2%AE%20P%20(Homopolymer)%20EHS%20natural%20718584%20ES.pdf
     tags:
       - low-cost
       - chemical-resistant
@@ -151,6 +185,9 @@ materials:
       - it is welded instead.
     url: https://en.wikipedia.org/wiki/High-density_polyethylene
     density: 950
+    youngsModulus: 1.0e+9 # Pa, Roechling Polystone G natur (PE-HD, PE 300); DIN EN ISO 527, extruded/pressed sheet, 23 C. Roechling, Polystone G natur (PE-HD / PE 300) Technisches Datenblatt, version 12.0 (17/07/2024), https://www.roechling.com/fileadmin/assets/Polystone%C2%AE%20G%20natur%20%E2%80%93%20Technisches%20Datenblatt%20%28DE%29.pdf
+    yieldStrength: 2.5e+7 # Pa, Roechling Polystone G natur (PE-HD, PE 300); DIN EN ISO 527 yield stress, 23 C. Roechling, Polystone G natur (PE-HD / PE 300) Technisches Datenblatt, version 12.0 (17/07/2024), https://www.roechling.com/fileadmin/assets/Polystone%C2%AE%20G%20natur%20%E2%80%93%20Technisches%20Datenblatt%20%28DE%29.pdf
+    thermalConductivity: 0.4 # W/(m*K), Roechling Polystone G natur (PE-HD, PE 300); DIN 52612-1. Roechling, Polystone G natur (PE-HD / PE 300) Technisches Datenblatt, version 12.0 (17/07/2024), https://www.roechling.com/fileadmin/assets/Polystone%C2%AE%20G%20natur%20%E2%80%93%20Technisches%20Datenblatt%20%28DE%29.pdf
     tags:
       - low-cost
       - chemical-resistant
@@ -167,6 +204,10 @@ materials:
       swarf and fires unpleasant.
     url: https://en.wikipedia.org/wiki/Polyvinyl_chloride
     density: 1400
+    youngsModulus: 3.0e+9 # Pa, Roechling Trovidur PVC-U white (rigid sheet); DIN EN ISO 527, 23 C. Roechling, Trovidur PVC-U white technical data sheet [591337], https://www.roechling.com/fileadmin/assets/Technical%20Data%20Sheet%20Trovidur%C2%AE%20PVC-U%20white%20591337%20FR.pdf
+    poissonsRatio: 0.38 # PVC, rigid (textbook); room temperature. Callister, Materials Science and Engineering: An Introduction, 7th ed. (Wiley, 2007), as tabulated with citation at https://amesweb.info/Materials/Poissons_Ratio_of_Polymers.aspx
+    yieldStrength: 4.5e+7 # Pa, Roechling Trovidur PVC-U white (rigid sheet); DIN EN ISO 527 yield stress, 23 C. Roechling, Trovidur PVC-U white technical data sheet [591337], https://www.roechling.com/fileadmin/assets/Technical%20Data%20Sheet%20Trovidur%C2%AE%20PVC-U%20white%20591337%20FR.pdf
+    thermalConductivity: 0.2 # W/(m*K), Roechling Trovidur PVC-U white (rigid sheet); DIN 52612-1. Roechling, Trovidur PVC-U white technical data sheet [591337], https://www.roechling.com/fileadmin/assets/Technical%20Data%20Sheet%20Trovidur%C2%AE%20PVC-U%20white%20591337%20FR.pdf
     tags:
       - low-cost
       - flame-retardant
@@ -187,6 +228,10 @@ materials:
       However, due to its structure it is prone to absorb water which causes a chemical change of the material and effects the material properties.
     url: https://en.wikipedia.org/wiki/Nylon
     density: 1150
+    youngsModulus: 3.1e+9 # Pa, DuPont Zytel 101L NC010 (PA66, unreinforced); ISO 527-1/-2, dry as moulded, 23 C. DuPont, Zytel 101L NC010 product information (ISO data), https://quickparts.com/wp-content/uploads/2023/04/zytel%C2%AE-101l-nc010-gb.pdf
+    poissonsRatio: 0.37 # DuPont Zytel 101L NC010 (PA66, unreinforced); dry as moulded. DuPont, Zytel 101L NC010 product information (ISO data), https://quickparts.com/wp-content/uploads/2023/04/zytel%C2%AE-101l-nc010-gb.pdf
+    yieldStrength: 8.2e+7 # Pa, DuPont Zytel 101L NC010 (PA66, unreinforced); ISO 527-1/-2 yield stress, 50 mm/min, dry as moulded, 23 C. DuPont, Zytel 101L NC010 product information (ISO data), https://quickparts.com/wp-content/uploads/2023/04/zytel%C2%AE-101l-nc010-gb.pdf
+    thermalConductivity: 0.24 # W/(m*K), DuPont Zytel 101L NC010 (PA66, unreinforced); ISO 22007-2. DuPont, Zytel 101L NC010 product information (ISO data), https://quickparts.com/wp-content/uploads/2023/04/zytel%C2%AE-101l-nc010-gb.pdf
     mu: 0.3 # dry against polished steel
     tags:
       - durable
@@ -203,6 +248,8 @@ materials:
       than PA66.
     url: https://en.wikipedia.org/wiki/Nylon_12
     density: 1010
+    youngsModulus: 1.7e+9 # Pa, EOS PA 2200 (PA12, laser sintered); DIN EN ISO 527, laser-sintered parts, 23 C. EOS, Product Information 'Feinpolyamide PA 2200 for EOSINT P', https://www.amf.uzh.ch/dam/jcr:59a8b14a-c212-4693-8443-d5e543aeabe2/Material-Data-PA2200-ENGLISH.pdf
+    thermalConductivity: 0.136 # W/(m*K), EOS PA 2200 (PA12, laser sintered); DIN 52616. EOS, Product Information 'Feinpolyamide PA 2200 for EOSINT P', https://www.amf.uzh.ch/dam/jcr:59a8b14a-c212-4693-8443-d5e543aeabe2/Material-Data-PA2200-ENGLISH.pdf
     tags:
       - dimensionally-stable
       - chemical-resistant
@@ -220,6 +267,8 @@ materials:
       stiffer along the flow than across it.
     url: https://en.wikipedia.org/wiki/Nylon_66
     density: 1370
+    youngsModulus: 1.0e+10 # Pa, BASF Ultramid A3EG6 (PA66-GF30); ISO 527-2, dry as moulded, 23 C. BASF, Ultramid A3EG6 datasheet (UL Prospector copy), https://sushengpolymer.com/media/pdf/VD8rbH_Ultramid-A3EG6.pdf
+    poissonsRatio: 0.34 # DuPont Zytel 70G33HS1L (PA66-GF33); ISO 527, dry as moulded. DuPont, Zytel 70G33HS1L NC010 datasheet (UL Prospector copy), https://www.protolabs.com/media/hxudykda/zytel-70g33hs1l.pdf
     tags:
       - glass-filled
       - stiff
@@ -237,6 +286,7 @@ materials:
       continuous-fibre laminate, and it wants a hardened nozzle.
     url: https://en.wikipedia.org/wiki/Carbon-fiber-reinforced_polymer
     density: 1200
+    youngsModulus: 8.64e+9 # Pa, Polymaker Fiberon PA6-CF20 (printed); ISO 527, printed X-Y direction, dry, 100% infill. Polymaker, Fiberon PA6-CF20 Technical Data Sheet V1.1, https://fiberon.polymaker.com/wp-content/uploads/TDS_FIBERON-PA6-CF20_V1.1_EN.pdf
     tags:
       - carbon-filled
       - stiff
@@ -254,6 +304,10 @@ materials:
       burns rather than resists flame, and it is attacked by strong acids.
     url: https://en.wikipedia.org/wiki/Polyoxymethylene
     density: 1410
+    youngsModulus: 3.15e+9 # Pa, DuPont Delrin 100 NC010 (POM homopolymer); ISO 527-2, injection-moulded, 23 C. DuPont, Delrin 100 NC010 datasheet (UL Prospector copy), https://sushengpolymer.com/media/pdf/L1RBhh_Delrin-100-NC010.pdf
+    poissonsRatio: 0.35 # Acetal (handbook); 23 C. Machinery's Handbook, 31st ed. (Industrial Press, 2020), 'Stress and Strain in Plastics', Table 1 'Poisson's Ratio at 23 C for Resins and Compounds', p. 566; viewed at https://online.flippingbook.com/view/954192180/629/
+    yieldStrength: 7.2e+7 # Pa, DuPont Delrin 100 NC010 (POM homopolymer); ISO 527-2 tensile stress at yield, 23 C. DuPont, Delrin 100 NC010 datasheet (UL Prospector copy), https://sushengpolymer.com/media/pdf/L1RBhh_Delrin-100-NC010.pdf
+    thermalConductivity: 0.36 # W/(m*K), Quadrant EPP Delrin acetal (stock shape); ASTM F433. Quadrant Engineering Plastic Products, Quadrant EPP Delrin Acetal datasheet (UL Prospector copy), https://sushengpolymer.com/media/pdf/mstbvC_Quadrant-EPP-Delrin-Acetal.pdf
     mu: 0.2 # dry against polished steel
     tags:
       - low-friction
@@ -271,6 +325,9 @@ materials:
       It creeps under load and cannot be injection moulded in the usual way.
     url: https://en.wikipedia.org/wiki/Ultra-high-molecular-weight_polyethylene
     density: 940
+    youngsModulus: 7.2e+8 # Pa, Celanese GUR 4120; ISO 527-2/1A, 1 mm/min, compression-moulded, 23 C. Celanese, GUR 4120 PE-UHMW datasheet, https://plasticker.de/docs/recybase/44846_1759500889.pdf
+    yieldStrength: 1.7e+7 # Pa, Celanese GUR 4120; ISO 527-2/1A tensile stress at yield, 50 mm/min, 23 C. Celanese, GUR 4120 PE-UHMW datasheet, https://plasticker.de/docs/recybase/44846_1759500889.pdf
+    thermalConductivity: 0.41 # W/(m*K), Celanese GUR 4120; 23 C, Celanese internal method. Celanese, GUR 4120 PE-UHMW datasheet, https://plasticker.de/docs/recybase/44846_1759500889.pdf
     mu: 0.15 # dry against polished steel
     tags:
       - low-friction
@@ -292,6 +349,9 @@ materials:
       is why it is bolted, clamped or etched rather than bonded.
     url: https://en.wikipedia.org/wiki/Polytetrafluoroethylene
     density: 2200
+    poissonsRatio: 0.46 # Chemours (DuPont) Teflon PTFE granular resin; 23 C. DuPont/Chemours, Teflon PTFE fluoropolymer resin Properties Handbook, https://cdn.toxicdocs.org/K6/K6RD4NNj8dVar4pb7aORgak4X/K6RD4NNj8dVar4pb7aORgak4X.pdf
+    yieldStrength: 9.0e+6 # Pa, Chemours (DuPont) Teflon PTFE granular resin; 23 C (handbook table 'Yield Strength at Various Temperatures'). DuPont/Chemours, Teflon PTFE fluoropolymer resin Properties Handbook, https://cdn.toxicdocs.org/K6/K6RD4NNj8dVar4pb7aORgak4X/K6RD4NNj8dVar4pb7aORgak4X.pdf
+    thermalConductivity: 0.25 # W/(m*K), Chemours (DuPont) Teflon PTFE granular resin; 4.6 mm specimen, room temperature. DuPont/Chemours, Teflon PTFE fluoropolymer resin Properties Handbook, https://cdn.toxicdocs.org/K6/K6RD4NNj8dVar4pb7aORgak4X/K6RD4NNj8dVar4pb7aORgak4X.pdf
     mu: 0.04 # dry against polished steel
     tags:
       - low-friction
@@ -310,6 +370,9 @@ materials:
       roughly a hundred times what ABS does.
     url: https://en.wikipedia.org/wiki/Polyether_ether_ketone
     density: 1300
+    youngsModulus: 4.0e+9 # Pa, Victrex PEEK 450G; ISO 527-1, injection-moulded, 23 C. Victrex, VICTREX PEEK 450G datasheet, https://www.victrex.com/en/downloads/datasheets/victrex-peek-450g
+    yieldStrength: 9.8e+7 # Pa, Victrex PEEK 450G; ISO 527-2 tensile stress at yield, 23 C. Victrex, VICTREX PEEK 450G datasheet, https://www.victrex.com/en/downloads/datasheets/victrex-peek-450g
+    thermalConductivity: 0.29 # W/(m*K), Victrex PEEK 450G; ISO 22007-4, 23 C, averaged. Victrex, VICTREX PEEK 450G datasheet, https://www.victrex.com/en/downloads/datasheets/victrex-peek-450g
     mu: 0.35 # dry against polished steel
     tags:
       - high-temperature
@@ -328,6 +391,10 @@ materials:
       hardware is made of.
     url: https://en.wikipedia.org/wiki/Polyetherimide
     density: 1270
+    youngsModulus: 3.58e+9 # Pa, SABIC Ultem 1000; ASTM D638 Type I, 5 mm/min, 23 C. SABIC, ULTEM Resin 1000 (Americas) technical data sheet, https://Protolabs.com/media/1020056/ultem-resin_1000_americas_technical_data_sheet.pdf
+    poissonsRatio: 0.36 # SABIC Ultem 1000; ASTM E132. SABIC, ULTEM Resin 1000 (Americas) technical data sheet, https://Protolabs.com/media/1020056/ultem-resin_1000_americas_technical_data_sheet.pdf
+    yieldStrength: 1.1e+8 # Pa, SABIC Ultem 1000; ASTM D638 tensile stress at yield, 23 C. SABIC, ULTEM Resin 1000 (Americas) technical data sheet, https://Protolabs.com/media/1020056/ultem-resin_1000_americas_technical_data_sheet.pdf
+    thermalConductivity: 0.22 # W/(m*K), SABIC Ultem 1000; ASTM C177. SABIC, ULTEM Resin 1000 (Americas) technical data sheet, https://Protolabs.com/media/1020056/ultem-resin_1000_americas_technical_data_sheet.pdf
     tags:
       - high-temperature
       - flame-retardant
@@ -344,6 +411,8 @@ materials:
       parts. Brittle, and it needs a hot mould.
     url: https://en.wikipedia.org/wiki/Polyphenylene_sulfide
     density: 1350
+    youngsModulus: 4.0e+9 # Pa, Celanese Fortron 0205 (unfilled PPS); ISO 527-2/1A/1, 23 C. Celanese, Fortron 0205 datasheet (UL Prospector copy), https://sushengpolymer.com/media/pdf/GGawrU_Fortron-0205.pdf
+    poissonsRatio: 0.38 # Fortron PPS, unfilled; design-manual value. Ticona/Celanese, 'Designing with Fortron Polyphenylene Sulfide' design manual (FN-10), section 'Poisson's Ratio', https://ww3.cad.de/foren/ubb/uploads/pmax/Fortron_FN-10_3.9.07.pdf
     tags:
       - high-temperature
       - chemical-resistant
@@ -419,6 +488,7 @@ materials:
       fuel all attack it, so it stays away from anything petroleum.
     url: https://en.wikipedia.org/wiki/Natural_rubber
     density: 930
+    thermalConductivity: 0.15 # W/(m*K), natural rubber, vulcanized; 25 C. C. J. M. Lasance, 'The Thermal Conductivity of Rubbers/Elastomers', Electronics Cooling, Nov 2001, table 'Thermal conductivity of rubbers/elastomers at 25 C', https://www.electronics-cooling.com/2001/11/the-thermal-conductivity-of-rubbers-elastomers/
     mu: 1.0 # rubber on a dry hard surface - the road or floor a wheel runs on
     tags:
       - elastomer
@@ -435,6 +505,7 @@ materials:
       wearing, up to about 100 C, and poor in ozone, sunlight and brake fluid.
     url: https://en.wikipedia.org/wiki/Nitrile_rubber
     density: 1000
+    thermalConductivity: 0.24 # W/(m*K), nitrile rubber (NBR); 25 C. C. J. M. Lasance, 'The Thermal Conductivity of Rubbers/Elastomers', Electronics Cooling, Nov 2001, table 'Thermal conductivity of rubbers/elastomers at 25 C', https://www.electronics-cooling.com/2001/11/the-thermal-conductivity-of-rubbers-elastomers/
     tags:
       - elastomer
       - oil-resistant
@@ -482,6 +553,7 @@ materials:
       and abrades quickly - and it swells in fuel and oil.
     url: https://en.wikipedia.org/wiki/Silicone_rubber
     density: 1200
+    thermalConductivity: 0.14 # W/(m*K), silicone rubber (VMQ); 25 C. C. J. M. Lasance, 'The Thermal Conductivity of Rubbers/Elastomers', Electronics Cooling, Nov 2001, table 'Thermal conductivity of rubbers/elastomers at 25 C', https://www.electronics-cooling.com/2001/11/the-thermal-conductivity-of-rubbers-elastomers/
     tags:
       - elastomer
       - high-temperature
