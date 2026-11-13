@@ -35,9 +35,10 @@ desc: Standard polymers - thermoplastics, composites and elastomers - as PartCAD
 # grade, in which condition, and where the number comes from. A property that is
 # absent was not known well enough to state: a part made of the material is then
 # analysed at the implementation's own default for it, which is visibly a
-# default, rather than at a guess that looks like a fact. These keys are read by
-# a PartCAD that hands a part's material to its analyses; an older one lints
-# them as unknown and otherwise ignores them.
+# default, rather than at a guess that looks like a fact. PartCAD 0.10.17 and
+# later read these keys and hand them to a part's analyses. An older one ignores
+# them, and only its 'pc lint' reports them as unknown, so the 'partcad:' floor
+# above stays where it is: nothing an older PartCAD reads here has changed.
 materials:
   #
   # Commodity and printable thermoplastics
